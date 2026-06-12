@@ -2,12 +2,12 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Routine" />
   <meta name="theme-color" content="#f5f0e8" />
-  <title>Routine v1.7</title>
+  <title>Routine v1.10</title>
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="portrait" />
   <script>
@@ -47,6 +47,8 @@
 
     * { box-sizing: border-box; }
 
+    html { touch-action: pan-x pan-y; }
+
     html, body {
       margin: 0;
       width: 100%;
@@ -69,12 +71,21 @@
     }
 
     button, input, textarea { font: inherit; }
-    button { border: 0; cursor: pointer; color: inherit; }
+    button {
+      border: 0;
+      cursor: pointer;
+      color: inherit;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
     input, textarea {
       color: var(--ink);
       font-size: 16px;
       -webkit-appearance: none;
       appearance: none;
+      touch-action: manipulation;
     }
 
     .app {
@@ -984,6 +995,62 @@
       background: rgba(255,255,255,0.68);
     }
 
+
+
+    .departure-pin {
+      display: inline-flex;
+      align-items: center;
+      max-width: 118px;
+      margin-left: 6px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.62);
+      border: 1px solid var(--line);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 950;
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .departure-editor {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .departure-editor label {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      white-space: nowrap;
+    }
+
+    .departure-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      height: 40px;
+      border-radius: 15px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.74);
+      padding: 0 12px;
+      font-size: 16px;
+      font-weight: 900;
+      outline: none;
+    }
+
+    .memo-input.has-departure {
+      padding: 7px 9px;
+      display: flex;
+      align-items: center;
+      overflow: visible;
+    }
+
     @media (max-height: 760px) {
       .app { padding-top: 10px; gap: 10px; }
       .run-shell { min-height: auto; padding: 11px 8px 8px; border-radius: 28px; }
@@ -1098,7 +1165,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const APP_VERSION = "1.6";
+    const APP_VERSION = "1.10";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
 
@@ -1155,6 +1222,28 @@
           { id: "d5", icon: "↩", title: "독서실 복귀", note: "", minutes: 8 },
           { id: "d6", icon: "🪑", title: "자리 앉기", note: "", minutes: 0.5 },
           { id: "d7", icon: "📖", title: "방금 하던 자료 열기", note: "", minutes: 1 }
+        ]
+      },
+      {
+        id: "outing",
+        icon: "🧭",
+        name: "외출 준비",
+        color: "#8b5e43",
+        soft: "#efe1d5",
+        doneText: "외출 준비 완료. 출발하자.",
+        steps: [
+          { id: "o1", icon: "🗺", title: "지도 보고 교통편 확인", note: "도착 시간 기준으로 보기", minutes: 2 },
+          { id: "o2", icon: "⏰", title: "출발 시각 적기", note: "", minutes: 0.75, capture: "departure" },
+          { id: "o3", icon: "👕", title: "옷 고르고 꺼내놓기", note: "샤워 후 바로 입을 것", minutes: 3 },
+          { id: "o4", icon: "🔌", title: "충전할 것 꽂기", note: "폰 · 보조배터리 · 이어폰", minutes: 0.75 },
+          { id: "o5", icon: "🚿", title: "샤워", note: "", minutes: 25 },
+          { id: "o6", icon: "🪒", title: "면도", note: "", minutes: 4 },
+          { id: "o7", icon: "🧴", title: "로션·립밤", note: "", minutes: 2 },
+          { id: "o8", icon: "🎒", title: "짐 챙기기", note: "지갑 · 키 · 학생증 · 충전기", minutes: 4 },
+          { id: "o9", icon: "🧥", title: "옷 입기", note: "", minutes: 4 },
+          { id: "o10", icon: "🪞", title: "거울 확인", note: "머리 · 옷 · 얼굴", minutes: 1.5 },
+          { id: "o11", icon: "👟", title: "가방 메고 신발 신기", note: "", minutes: 2 },
+          { id: "o12", icon: "🚪", title: "출발", note: "", minutes: 1 }
         ]
       },
       {
@@ -1228,6 +1317,8 @@
     let editStepId = null;
     let previousScreen = "home";
     let suppressStepMemoInput = false;
+    let wakeLock = null;
+    let wakeLockWanted = false;
     let lastPreviewKey = "";
     let shouldCenterPreview = false;
 
@@ -1271,7 +1362,8 @@
         icon: String(step.icon || source.icon || "·").slice(0, 4),
         title: String(step.title || source.title || "새 단계"),
         note: String(step.note ?? source.note ?? ""),
-        minutes: Math.max(1 / 6, Number(step.minutes ?? source.minutes) || 1)
+        minutes: Math.max(1 / 6, Number(step.minutes ?? source.minutes) || 1),
+        capture: step.capture || source.capture || null
       };
     }
 
@@ -1337,6 +1429,7 @@
           session.status = routine.steps.map((_, idx) => session.status?.[idx] || "pending");
         }
         if (!Array.isArray(session.history)) session.history = [];
+        if (typeof session.departureText !== "string") session.departureText = "";
         session.index = Math.min(Math.max(0, Number(session.index) || 0), routine.steps.length - 1);
         if (!Number.isFinite(session.remainingSec)) {
           session.remainingSec = minutesToSeconds(routine.steps[session.index].minutes);
@@ -1371,6 +1464,7 @@
           existing.status = routine.steps.map((_, idx) => existing.status?.[idx] || "pending");
         }
         if (!Array.isArray(existing.history)) existing.history = [];
+        if (typeof existing.departureText !== "string") existing.departureText = "";
         existing.index = Math.min(Math.max(0, Number(existing.index) || 0), routine.steps.length - 1);
         if (!Number.isFinite(existing.remainingSec)) {
           existing.remainingSec = minutesToSeconds(routine.steps[existing.index].minutes);
@@ -1389,7 +1483,8 @@
         running: autoRun,
         lastTick: Date.now(),
         startedAt: Date.now(),
-        history: []
+        history: [],
+        departureText: ""
       };
     }
 
@@ -1436,6 +1531,44 @@
       document.documentElement.style.setProperty("--accent-soft", target.soft || "#dcebe4");
     }
 
+    async function requestWakeLock() {
+      wakeLockWanted = true;
+      if (wakeLock || document.visibilityState !== "visible") return;
+      if (!("wakeLock" in navigator) || !navigator.wakeLock?.request) return;
+      try {
+        wakeLock = await navigator.wakeLock.request("screen");
+        wakeLock.addEventListener("release", () => {
+          wakeLock = null;
+          if (wakeLockWanted && document.visibilityState === "visible") {
+            requestWakeLock();
+          }
+        });
+      } catch (error) {
+        wakeLock = null;
+      }
+    }
+
+    async function releaseWakeLock() {
+      wakeLockWanted = false;
+      if (!wakeLock) return;
+      const lock = wakeLock;
+      wakeLock = null;
+      try {
+        await lock.release();
+      } catch (error) {}
+    }
+
+    function shouldKeepWakeLock(screenName) {
+      if (screenName !== "run" || !activeRoutineId) return false;
+      const session = state.sessions?.[activeRoutineId];
+      return Boolean(session && session.running);
+    }
+
+    function syncWakeLock(screenName) {
+      if (shouldKeepWakeLock(screenName)) requestWakeLock();
+      else releaseWakeLock();
+    }
+
     function showScreen(name) {
       els.app.classList.toggle("run-mode", name === "run");
       els.app.classList.toggle("edit-mode", name === "edit");
@@ -1443,6 +1576,7 @@
       els.run.classList.toggle("active", name === "run");
       els.done.classList.toggle("active", name === "done");
       els.edit.classList.toggle("active", name === "edit");
+      syncWakeLock(name);
     }
 
     function renderHome() {
@@ -1550,7 +1684,9 @@
       const angle = stepTotal > 0 ? (Math.max(0, Math.min(elapsed, stepTotal)) / stepTotal) * 360 : 360;
       const isOverdue = session.remainingSec < 0;
 
-      els.runStepMeta.textContent = `${routine.name} · ${session.index + 1} / ${routine.steps.length}`;
+      const departureText = String(session.departureText || "").trim();
+      const departurePin = departureText ? `<span class="departure-pin">출발 ${escapeHtml(departureText)}</span>` : "";
+      els.runStepMeta.innerHTML = `${escapeHtml(routine.name)} · ${session.index + 1} / ${routine.steps.length}${departurePin}`;
       els.sessionRoutineTitle.textContent = routine.name;
       els.taskIcon.textContent = step.icon || "·";
       els.progressFill.style.width = `${percent}%`;
@@ -1563,9 +1699,23 @@
       els.pauseBtn.textContent = session.running ? "일시정지" : "재개";
       els.undoBtn.disabled = !session.history.length;
       renderStepPreview(routine, session.index);
+      syncWakeLock("run");
       const note = String(step.note || "").trim();
-      els.stepMemo.textContent = note || "";
-      els.stepMemo.classList.toggle("empty", !note);
+      const isDepartureCapture = step.capture === "departure";
+      if (isDepartureCapture) {
+        els.stepMemo.classList.remove("empty");
+        els.stepMemo.classList.add("has-departure");
+        els.stepMemo.innerHTML = `
+          <div class="departure-editor">
+            <label for="departureInput">출발</label>
+            <input id="departureInput" class="departure-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="예: 18:20" value="${escapeAttr(departureText)}" />
+          </div>
+        `;
+      } else {
+        els.stepMemo.classList.remove("has-departure");
+        els.stepMemo.textContent = note || "";
+        els.stepMemo.classList.toggle("empty", !note);
+      }
       els.stepMemo.parentElement.hidden = false;
     }
 
@@ -1736,11 +1886,11 @@
               <input class="field" data-field="title" data-index="${idx}" value="${escapeAttr(step.title)}" placeholder="단계 제목" autocomplete="off" />
             </div>
             <div class="duration-control">
-              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="-60" type="button">−1분</button>
-              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="-10" type="button">−10초</button>
+              <button class="duration-btn minute-adjust" data-action="adjust-time" data-index="${idx}" data-delta="-60" type="button">−1분</button>
+              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="-15" type="button">−15초</button>
               <div class="duration-value">${formatDuration(minutesToSeconds(step.minutes))}</div>
-              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="10" type="button">+10초</button>
-              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="60" type="button">+1분</button>
+              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="15" type="button">+15초</button>
+              <button class="duration-btn minute-adjust" data-action="adjust-time" data-index="${idx}" data-delta="60" type="button">+1분</button>
             </div>
             <div class="memo-wrap ${hasNote ? "has-note" : "no-note"}">
               <textarea class="edit-textarea" rows="2" data-field="note" data-index="${idx}" placeholder="메모" autocomplete="off">${escapeHtml(step.note || "")}</textarea>
@@ -1848,6 +1998,20 @@
     els.completeBtn.addEventListener("click", () => advance("done"));
     els.skipBtn.addEventListener("click", () => advance("skipped"));
     els.pauseBtn.addEventListener("click", togglePause);
+    els.run.addEventListener("input", (event) => {
+      if (event.target?.id !== "departureInput" || !activeRoutineId) return;
+      const session = getSession(activeRoutineId);
+      if (!session) return;
+      session.departureText = String(event.target.value || "").slice(0, 32);
+      saveState();
+      renderRun();
+      const input = document.getElementById("departureInput");
+      if (input) {
+        input.focus({ preventScroll: true });
+        const len = input.value.length;
+        try { input.setSelectionRange(len, len); } catch (error) {}
+      }
+    });
     els.doneHomeBtn.addEventListener("click", renderHome);
     els.stepEditorList.addEventListener("input", (event) => {
       const target = event.target;
@@ -1863,6 +2027,37 @@
       const index = Number(target.dataset.index);
       if (!field || !Number.isInteger(index)) return;
       if (field === "icon" || field === "title") renderEditor();
+    });
+
+
+
+    let adjustRepeatTimer = null;
+    let adjustRepeatDelay = null;
+    let suppressNextAdjustClick = false;
+
+    function clearAdjustRepeat() {
+      if (adjustRepeatDelay) window.clearTimeout(adjustRepeatDelay);
+      if (adjustRepeatTimer) window.clearInterval(adjustRepeatTimer);
+      adjustRepeatDelay = null;
+      adjustRepeatTimer = null;
+    }
+
+    els.stepEditorList.addEventListener("pointerdown", (event) => {
+      const button = event.target.closest('button[data-action="adjust-time"]');
+      if (!button || Math.abs(Number(button.dataset.delta)) !== 60) return;
+      const index = Number(button.dataset.index);
+      const delta = Number(button.dataset.delta);
+      if (!Number.isInteger(index) || !Number.isFinite(delta)) return;
+      clearAdjustRepeat();
+      adjustRepeatDelay = window.setTimeout(() => {
+        suppressNextAdjustClick = true;
+        adjustStepDuration(index, delta);
+        adjustRepeatTimer = window.setInterval(() => adjustStepDuration(index, delta), 135);
+      }, 420);
+    });
+
+    ["pointerup", "pointercancel", "pointerleave"].forEach((name) => {
+      document.addEventListener(name, () => clearAdjustRepeat());
     });
 
     els.stepEditorList.addEventListener("click", (event) => {
@@ -1883,6 +2078,10 @@
       const index = Number(button.dataset.index);
       if (!Number.isInteger(index)) return;
       if (action === "adjust-time") {
+        if (suppressNextAdjustClick) {
+          suppressNextAdjustClick = false;
+          return;
+        }
         const delta = Number(button.dataset.delta);
         if (Number.isFinite(delta)) adjustStepDuration(index, delta);
         return;
@@ -1927,6 +2126,11 @@
     });
 
     window.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        syncWakeLock(els.run.classList.contains("active") ? "run" : "other");
+      } else {
+        releaseWakeLock();
+      }
       if (!activeRoutineId) return;
       const session = getSession(activeRoutineId);
       if (!session) return;
