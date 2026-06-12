@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Routine" />
+  <meta name="theme-color" content="#f5f0e8" />
+  <title>Routine v1.3</title>
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="screen-orientation" content="portrait" />
+  <script>
+    (() => {
+      const manifest = {
+        name: "Routine",
+        short_name: "Routine",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#f5f0e8",
+        theme_color: "#f5f0e8",
+        orientation: "portrait-primary"
+      };
+      const link = document.createElement("link");
+      link.rel = "manifest";
+      link.href = "data:application/manifest+json," + encodeURIComponent(JSON.stringify(manifest));
+      document.head.appendChild(link);
+    })();
+  </script>
+  <style>
+    :root {
+      --bg: #f5f0e8;
+      --panel: rgba(255, 255, 255, 0.74);
+      --panel-strong: #fffaf2;
+      --ink: #28231d;
+      --muted: #81786b;
+      --faint: #d9cfc0;
+      --line: rgba(67, 54, 38, 0.12);
+      --accent: #3c7d66;
+      --accent-ink: #ffffff;
+      --accent-soft: #dcebe4;
+      --warn: #b56b43;
+      --danger: #a64b43;
+      --shadow: 0 22px 70px rgba(74, 59, 42, 0.16);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at top left, #fff5df 0, transparent 36%), var(--bg);
+      color: var(--ink);
+      -webkit-tap-highlight-color: transparent;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+
+    body {
+      height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+      overflow: hidden;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { border: 0; cursor: pointer; color: inherit; }
+    input, textarea {
+      color: var(--ink);
+      font-size: 16px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+      height: 100%;
+      min-height: 0;
+      padding: 14px 0 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .app::-webkit-scrollbar { width: 0; height: 0; }
+
+    .app.run-mode,
+    .app.edit-mode { overflow: hidden; }
+    .app.run-mode .topbar,
+    .app.edit-mode .topbar { flex: 0 0 auto; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 4px;
+    }
+
+    .top-left, .top-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .top-spacer {
+      width: 48px;
+      height: 1px;
+      flex: 0 0 auto;
+    }
+
+    .top-title {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      flex: 1;
+    }
+
+    .top-btn, .pill {
+      height: 34px;
+      border-radius: 999px;
+      padding: 0 11px;
+      background: rgba(255,255,255,0.62);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .pill { display: inline-grid; place-items: center; }
+
+    .top-btn:disabled {
+      opacity: 0.42;
+      cursor: default;
+    }
+
+    .home, .run, .done-screen, .edit-screen { display: none; }
+    .home.active, .run.active, .done-screen.active, .edit-screen.active { display: flex; }
+
+    .home {
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .hero {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.78), rgba(255, 249, 236, 0.62));
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 16px 18px;
+      box-shadow: 0 12px 32px rgba(80, 65, 44, 0.08);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 29px;
+      line-height: 1.08;
+      letter-spacing: -0.055em;
+    }
+
+    .hero p {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 650;
+    }
+
+    .routine-list, .step-card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .routine-card, .step-card {
+      width: 100%;
+      text-align: left;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 15px;
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 13px;
+      box-shadow: 0 12px 32px rgba(80, 65, 44, 0.08);
+      transition: transform 140ms ease, background 140ms ease, border 140ms ease;
+    }
+
+    .routine-card:active, .step-card:active, .top-btn:active, .main-action:active, .sub-action:active, .full-btn:active, .ghost-btn:active, .small-action:active, .icon-btn:active { transform: scale(0.985); }
+
+    .routine-icon, .step-icon-tile {
+      width: 48px;
+      height: 48px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .routine-name, .step-card-title {
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+    }
+
+    .routine-meta, .step-card-meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+
+    .routine-state, .step-time-pill {
+      font-size: 12px;
+      font-weight: 850;
+      padding: 7px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.64);
+      color: var(--muted);
+      border: 1px solid var(--line);
+      white-space: nowrap;
+    }
+
+    .routine-state.finished {
+      background: var(--accent);
+      color: var(--accent-ink);
+      border-color: transparent;
+    }
+
+    .run {
+      flex: 1;
+      min-height: 0;
+      flex-direction: column;
+      gap: 8px;
+      overflow: hidden;
+    }
+
+    .run-shell {
+      flex: 1;
+      min-height: 0;
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 249, 236, 0.74));
+      border: 1px solid var(--line);
+      border-radius: 32px;
+      padding: 14px 10px 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .preview-row {
+      display: block;
+      flex: 0 0 auto;
+      overflow: visible;
+      margin: -2px 0 0;
+    }
+
+    .preview-nav { display: none; }
+
+    .step-preview {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 7px 2px 10px;
+      margin: 0;
+      min-height: 56px;
+      align-items: center;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x;
+      overscroll-behavior-x: contain;
+    }
+
+    .step-preview::-webkit-scrollbar { display: none; }
+
+    .preview-chip {
+      flex: 0 0 auto;
+      max-width: 168px;
+      height: 42px;
+      border-radius: 999px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.62);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .preview-chip.current {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: rgba(60,125,102,0.24);
+      box-shadow: inset 0 0 0 1px rgba(60,125,102,0.08);
+    }
+
+    .progress-track {
+      height: 6px;
+      background: rgba(40, 35, 29, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 2px 4px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 220ms ease;
+    }
+
+    .task-zone {
+      text-align: center;
+      padding: 7px 4px 2px;
+      flex: 0 0 auto;
+    }
+
+    .routine-small {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .task-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      margin: 0 auto 7px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 26px;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px rgba(67, 54, 38, 0.08);
+    }
+
+    .task-title {
+      font-size: clamp(30px, 8.6vw, 44px);
+      line-height: 1.04;
+      font-weight: 950;
+      letter-spacing: -0.07em;
+      word-break: keep-all;
+    }
+
+    .timer-zone {
+      display: grid;
+      place-items: center;
+      padding: 3px 0 5px;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .timer-ring {
+      width: min(58vw, 232px);
+      height: min(58vw, 232px);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: conic-gradient(var(--accent) var(--angle), rgba(60,125,102,0.13) 0deg);
+      box-shadow: inset 0 0 0 1px var(--line), 0 18px 50px rgba(60, 125, 102, 0.18);
+      position: relative;
+      transition: background 180ms ease, box-shadow 180ms ease;
+    }
+
+    .timer-ring.overdue {
+      background: conic-gradient(var(--warn) 360deg, rgba(181,107,67,0.18) 0deg);
+      box-shadow: inset 0 0 0 1px rgba(181,107,67,0.25), 0 18px 50px rgba(181,107,67,0.16);
+    }
+
+    .timer-ring::after {
+      content: "";
+      position: absolute;
+      inset: 13px;
+      border-radius: 50%;
+      background: #fffaf2;
+      box-shadow: inset 0 0 0 1px rgba(67, 54, 38, 0.08);
+    }
+
+    .timer-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 18px;
+    }
+
+    .timer-label { display: none; }
+
+    .timer-time {
+      font-size: clamp(40px, 12vw, 54px);
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -0.065em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-status {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .memo-wrap {
+      position: relative;
+      margin: 0 2px 8px;
+      flex: 0 0 auto;
+    }
+
+    .memo-input {
+      min-height: 0;
+      max-height: 46px;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.52);
+      padding: 7px 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 750;
+      white-space: pre-wrap;
+      word-break: keep-all;
+      scrollbar-width: none;
+    }
+
+    .memo-input.empty {
+      color: rgba(129,120,107,0.52);
+      font-weight: 700;
+    }
+
+    .edit-textarea {
+      width: 100%;
+      min-height: 46px;
+      max-height: 46px;
+      resize: none;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.66);
+      padding: 11px 36px 10px 12px;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1.32;
+      font-weight: 650;
+      outline: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(80,70,60,0.22) transparent;
+    }
+
+    .memo-wrap.has-note .edit-textarea,
+    .edit-textarea:focus {
+      min-height: 76px;
+      max-height: 112px;
+    }
+
+    .memo-wrap.no-note .clear-memo { display: none; }
+
+
+    .memo-input::-webkit-scrollbar, .edit-textarea::-webkit-scrollbar { width: 5px; }
+    .memo-input::-webkit-scrollbar-thumb, .edit-textarea::-webkit-scrollbar-thumb {
+      background: rgba(80,70,60,0.16);
+      border-radius: 999px;
+    }
+
+    .edit-textarea::placeholder, .field::placeholder { color: rgba(129,120,107,0.62); }
+
+    .clear-memo {
+      position: absolute;
+      top: 9px;
+      right: 9px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(40,35,29,0.07);
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 0;
+      flex: 0 0 auto;
+    }
+
+    .main-action {
+      grid-column: 1 / -1;
+      height: 58px;
+      border-radius: 24px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-size: 18px;
+      font-weight: 950;
+      box-shadow: 0 14px 28px rgba(60, 125, 102, 0.24);
+    }
+
+    .sub-action {
+      height: 44px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 850;
+    }
+
+    .sub-action.warn { color: var(--warn); }
+
+    .done-screen {
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .done-card {
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 249, 236, 0.72));
+      border: 1px solid var(--line);
+      border-radius: 36px;
+      padding: 26px 20px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .done-mark {
+      width: 78px;
+      height: 78px;
+      margin: 0 auto 18px;
+      border-radius: 28px;
+      background: var(--accent);
+      color: white;
+      display: grid;
+      place-items: center;
+      font-size: 38px;
+      font-weight: 950;
+    }
+
+    .done-card h2 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: -0.055em;
+    }
+
+    .done-card p {
+      margin: 11px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .done-actions { display: grid; gap: 10px; }
+
+    .full-btn, .ghost-btn {
+      width: 100%;
+      height: 56px;
+      border-radius: 22px;
+      font-weight: 950;
+      font-size: 16px;
+    }
+
+    .full-btn { background: var(--accent); color: #fff; }
+    .ghost-btn { background: rgba(255,255,255,0.62); border: 1px solid var(--line); color: var(--muted); }
+
+    .edit-screen {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .edit-panel {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 100%;
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 249, 236, 0.74));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 12px 8px calc(12px + env(safe-area-inset-bottom));
+      box-shadow: 0 12px 34px rgba(74, 59, 42, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scrollbar-width: none;
+    }
+
+    .edit-panel::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+    .routine-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 1px 7px;
+      min-height: 48px;
+      flex: 0 0 auto;
+      scrollbar-width: none;
+      touch-action: pan-x;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+    }
+
+    .routine-tabs::-webkit-scrollbar { display: none; }
+
+    .routine-tab {
+      flex: 0 0 auto;
+      max-width: 148px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.62);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .routine-tab.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: rgba(60,125,102,0.22);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 54px 1fr;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .field-row.compact {
+      grid-template-columns: 46px 1fr;
+    }
+
+    .field-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .field {
+      width: 100%;
+      height: 36px;
+      border-radius: 13px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.66);
+      padding: 0 12px;
+      font-size: 16px;
+      font-weight: 750;
+      outline: none;
+    }
+
+    .field.short { text-align: center; padding: 0 8px; }
+
+    .duration-control {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.15fr 1fr 1fr;
+      gap: 4px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: rgba(255,255,255,0.46);
+      padding: 4px;
+    }
+
+    .duration-value {
+      min-height: 30px;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .duration-btn {
+      min-height: 30px;
+      border-radius: 11px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      padding: 0 2px;
+      white-space: nowrap;
+    }
+
+    .edit-actions {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+    }
+
+    .small-action {
+      min-height: 38px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.64);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      padding: 0 7px;
+    }
+
+    .small-action.danger { color: var(--danger); }
+    .small-action.primary { background: var(--accent); color: #fff; border-color: transparent; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .step-editor-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 8px;
+    }
+
+    .step-card {
+      box-shadow: none;
+      background: rgba(255,255,255,0.52);
+      grid-template-columns: 36px 1fr auto;
+      gap: 8px;
+      padding: 8px 9px;
+      border-radius: 18px;
+    }
+
+    .step-card .step-icon-tile {
+      width: 36px;
+      height: 36px;
+      border-radius: 13px;
+      font-size: 20px;
+    }
+
+    .step-card.active {
+      border-color: rgba(60,125,102,0.3);
+      background: rgba(255,255,255,0.72);
+    }
+
+    .step-detail {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.42);
+      padding: 7px;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .step-detail.active { display: flex; }
+
+    .step-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+
+    .icon-btn {
+      min-height: 32px;
+      border-radius: 13px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .icon-btn.danger { color: var(--danger); }
+
+    .add-step-card {
+      width: 100%;
+      min-height: 42px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.54);
+      border: 1px dashed rgba(67,54,38,0.22);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) translateY(22px);
+      opacity: 0;
+      transition: opacity 180ms ease, transform 180ms ease;
+      background: rgba(40, 35, 29, 0.88);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      pointer-events: none;
+      max-width: calc(100vw - 40px);
+      white-space: nowrap;
+      z-index: 20;
+    }
+
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-height: 760px) {
+      .app { padding-top: 10px; gap: 10px; }
+      .run-shell { min-height: auto; padding: 11px 8px 8px; border-radius: 28px; }
+      .step-preview { padding: 5px 2px 7px; min-height: 48px; }
+      .preview-chip { height: 36px; font-size: 13px; padding: 0 11px; }
+      .timer-zone { padding: 3px 0 5px; }
+      .timer-ring { width: min(50vw, 190px); height: min(50vw, 190px); }
+      .timer-time { font-size: clamp(34px, 10vw, 44px); }
+      .task-zone { padding: 7px 4px 2px; }
+      .task-icon { width: 48px; height: 48px; border-radius: 18px; font-size: 25px; margin-bottom: 6px; }
+      .task-title { font-size: clamp(27px, 7.4vw, 38px); }
+      .memo-input { min-height: 34px; max-height: 54px; font-size: 12px; }
+      .edit-textarea { min-height: 44px; max-height: 44px; }
+      .memo-wrap.has-note .edit-textarea, .edit-textarea:focus { min-height: 68px; max-height: 96px; }
+      .main-action { height: 54px; }
+      .sub-action { height: 42px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <section class="home active" id="homeScreen" aria-label="루틴 선택">
+      <header class="topbar">
+        <span class="pill" id="todayLabel">오늘</span>
+        <div class="top-title">루틴</div>
+        <button class="top-btn" id="openEditBtn" type="button">수정</button>
+      </header>
+      <div class="hero">
+        <h1>지금 할 루틴</h1>
+        <p>하나 고르고 바로 시작한다.</p>
+      </div>
+      <div class="routine-list" id="routineList"></div>
+    </section>
+
+    <section class="run" id="runScreen" aria-label="루틴 진행">
+      <header class="topbar">
+        <div class="top-left">
+          <button class="top-btn" id="backBtn" type="button">목록</button>
+          <button class="top-btn" id="undoBtn" type="button">되돌리기</button>
+        </div>
+        <div class="top-title" id="runStepMeta">1 / 1</div>
+      </header>
+      <div class="run-shell">
+        <div class="preview-row" aria-label="세부루틴 미리보기">
+          <div class="step-preview" id="stepPreview"></div>
+        </div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+        <div class="task-zone">
+          <div class="routine-small" id="sessionRoutineTitle">루틴</div>
+          <div class="task-icon" id="taskIcon">·</div>
+          <div class="task-title" id="taskTitle">루틴 선택</div>
+        </div>
+
+        <div class="timer-zone">
+          <div class="timer-ring" id="timerRing" style="--angle:0deg">
+            <div class="timer-content">
+              <div class="timer-label" id="timerLabel"></div>
+              <div class="timer-time" id="timerTime">00:00</div>
+              <div class="timer-status" id="timerStatus">일시정지</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="memo-wrap">
+          <div class="memo-input empty" id="stepMemo"></div>
+        </div>
+
+        <div class="controls">
+          <button class="main-action" id="completeBtn" type="button">완료</button>
+          <button class="sub-action" id="pauseBtn" type="button">일시정지</button>
+          <button class="sub-action warn" id="skipBtn" type="button">건너뛰기</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="done-screen" id="doneScreen" aria-label="루틴 완료">
+      <div class="done-card">
+        <div class="done-mark">✓</div>
+        <h2 id="doneTitle">루틴 완료</h2>
+        <p id="doneText">오늘 완료.</p>
+      </div>
+      <div class="done-actions">
+        <button class="full-btn" id="doneHomeBtn" type="button">목록</button>
+        <button class="ghost-btn" id="doneUndoBtn" type="button">되돌리기</button>
+        <button class="ghost-btn" id="restartBtn" type="button">다시 시작</button>
+      </div>
+    </section>
+
+    <section class="edit-screen" id="editScreen" aria-label="세부루틴 수정">
+      <header class="topbar">
+        <button class="top-btn" id="closeEditBtn" type="button">닫기</button>
+        <div class="top-title">세부루틴 수정</div>
+        <span class="top-spacer" aria-hidden="true"></span>
+      </header>
+      <div class="edit-panel">
+        <div class="routine-tabs" id="routineTabs"></div>
+        <div class="section-title">
+          <span id="editRoutineTitle">단계</span>
+          <span id="editTotalTime">약 0분</span>
+        </div>
+        <div class="step-editor-list" id="stepEditorList"></div>
+      </div>
+    </section>
+  </main>
+
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const APP_VERSION = "1.3";
+    const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
+    const STORAGE_KEY = "personal_routine_v01";
+
+    const DEFAULT_ROUTINES = [
+      {
+        id: "morning",
+        icon: "↗",
+        name: "아침 출근",
+        color: "#3c7d66",
+        soft: "#dcebe4",
+        doneText: "독서실 도착. 이제 첫 Step만 열면 된다.",
+        steps: [
+          { id: "m1", icon: "🚽", title: "화장실", note: "", minutes: 2 },
+          { id: "m2", icon: "💧", title: "물 마시기", note: "", minutes: 0.5 },
+          { id: "m3", icon: "🍚", title: "아침 먹기", note: "", minutes: 12 },
+          { id: "m4", icon: "🚿", title: "씻기", note: "", minutes: 10 },
+          { id: "m5", icon: "👕", title: "옷 입기", note: "", minutes: 3 },
+          { id: "m6", icon: "🎒", title: "가방 챙기기", note: "충전기 · 자료 · 필기구", minutes: 2 },
+          { id: "m7", icon: "📅", title: "캘린더 확인", note: "고정 일정만", minutes: 0.75 },
+          { id: "m8", icon: "👟", title: "신발 신기", note: "", minutes: 1 },
+          { id: "m9", icon: "🚪", title: "독서실 출발", note: "", minutes: 0.25 },
+          { id: "m10", icon: "🚶", title: "독서실 이동", note: "", minutes: 8 }
+        ]
+      },
+      {
+        id: "lunch",
+        icon: "☀️",
+        name: "점심 후 복귀",
+        color: "#456ca0",
+        soft: "#e1e9f5",
+        doneText: "복귀 완료. 방금 하던 자료부터 열자.",
+        steps: [
+          { id: "l1", icon: "🍽", title: "점심 끝", note: "", minutes: 1 / 6 },
+          { id: "l2", icon: "💧", title: "물 마시기", note: "", minutes: 0.5 },
+          { id: "l3", icon: "🚽", title: "화장실", note: "", minutes: 3 },
+          { id: "l4", icon: "🧹", title: "자리 정리", note: "", minutes: 1.5 },
+          { id: "l5", icon: "↩", title: "독서실 복귀", note: "", minutes: 8 },
+          { id: "l6", icon: "🪑", title: "자리 앉기", note: "", minutes: 0.5 },
+          { id: "l7", icon: "📖", title: "방금 하던 자료 열기", note: "", minutes: 1 }
+        ]
+      },
+      {
+        id: "dinner",
+        icon: "🌆",
+        name: "저녁 후 복귀",
+        color: "#8a6d3b",
+        soft: "#efe5ce",
+        doneText: "복귀 완료. 방금 하던 자료부터 열자.",
+        steps: [
+          { id: "d1", icon: "🍽", title: "저녁 끝", note: "", minutes: 1 / 6 },
+          { id: "d2", icon: "💧", title: "물 마시기", note: "", minutes: 0.5 },
+          { id: "d3", icon: "🚽", title: "화장실", note: "", minutes: 3 },
+          { id: "d4", icon: "🧹", title: "자리 정리", note: "", minutes: 1.5 },
+          { id: "d5", icon: "↩", title: "독서실 복귀", note: "", minutes: 8 },
+          { id: "d6", icon: "🪑", title: "자리 앉기", note: "", minutes: 0.5 },
+          { id: "d7", icon: "📖", title: "방금 하던 자료 열기", note: "", minutes: 1 }
+        ]
+      },
+      {
+        id: "night",
+        icon: "↓",
+        name: "밤 종료",
+        color: "#725f9b",
+        soft: "#e8e2f4",
+        doneText: "오늘은 닫았다. 폰 없이 침대에 들어가자.",
+        steps: [
+          { id: "n1", icon: "📒", title: "DayLog 빈칸 보정", note: "3~5칸만", minutes: 4 },
+          { id: "n2", icon: "✍️", title: "일기 3줄", note: "", minutes: 3 },
+          { id: "n3", icon: "💌", title: "썸원 답변 1개", note: "", minutes: 2 },
+          { id: "n4", icon: "📅", title: "내일 캘린더 확인", note: "고정 일정만", minutes: 1 },
+          { id: "n5", icon: "🧩", title: "내일 첫 Step 만들기", note: "첫 행동 하나", minutes: 3 },
+          { id: "n6", icon: "🛠", title: "루틴 수정", note: "필요한 것만", minutes: 2 },
+          { id: "n7", icon: "🎒", title: "내일 들고 갈 것 준비", note: "충전기 · 자료 · 지갑", minutes: 2 },
+          { id: "n8", icon: "🔌", title: "폰 침대 밖 충전", note: "손 안 닿게", minutes: 0.5 },
+          { id: "n9", icon: "🪥", title: "세수·양치", note: "", minutes: 5 },
+          { id: "n10", icon: "🧴", title: "로션·립밤", note: "", minutes: 1.5 },
+          { id: "n11", icon: "🌙", title: "조명 낮추기", note: "", minutes: 0.5 },
+          { id: "n12", icon: "🛏", title: "침대 들어가기", note: "폰 없이", minutes: 1 / 3 }
+        ]
+      }
+    ];
+
+    const els = {
+      app: document.getElementById("app"),
+      home: document.getElementById("homeScreen"),
+      run: document.getElementById("runScreen"),
+      done: document.getElementById("doneScreen"),
+      edit: document.getElementById("editScreen"),
+      todayLabel: document.getElementById("todayLabel"),
+      routineList: document.getElementById("routineList"),
+      openEditBtn: document.getElementById("openEditBtn"),
+      closeEditBtn: document.getElementById("closeEditBtn"),
+      previewLeftBtn: document.getElementById("previewLeftBtn"),
+      previewRightBtn: document.getElementById("previewRightBtn"),
+      editRoutineTitle: document.getElementById("editRoutineTitle"),
+      routineTabs: document.getElementById("routineTabs"),
+      editTotalTime: document.getElementById("editTotalTime"),
+      stepEditorList: document.getElementById("stepEditorList"),
+      backBtn: document.getElementById("backBtn"),
+      undoBtn: document.getElementById("undoBtn"),
+      runStepMeta: document.getElementById("runStepMeta"),
+      sessionRoutineTitle: document.getElementById("sessionRoutineTitle"),
+      taskIcon: document.getElementById("taskIcon"),
+      progressFill: document.getElementById("progressFill"),
+      stepPreview: document.getElementById("stepPreview"),
+      timerRing: document.getElementById("timerRing"),
+      timerLabel: document.getElementById("timerLabel"),
+      timerTime: document.getElementById("timerTime"),
+      timerStatus: document.getElementById("timerStatus"),
+      taskTitle: document.getElementById("taskTitle"),
+      stepMemo: document.getElementById("stepMemo"),
+      completeBtn: document.getElementById("completeBtn"),
+      pauseBtn: document.getElementById("pauseBtn"),
+      skipBtn: document.getElementById("skipBtn"),
+      doneTitle: document.getElementById("doneTitle"),
+      doneText: document.getElementById("doneText"),
+      doneHomeBtn: document.getElementById("doneHomeBtn"),
+      doneUndoBtn: document.getElementById("doneUndoBtn"),
+      restartBtn: document.getElementById("restartBtn"),
+      toast: document.getElementById("toast")
+    };
+
+    let state = loadState();
+    let tickId = null;
+    let activeRoutineId = null;
+    let editRoutineId = state.routines[0]?.id || "morning";
+    let editStepId = null;
+    let previousScreen = "home";
+    let suppressStepMemoInput = false;
+    let lastPreviewKey = "";
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function todayKey() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function todayKo() {
+      const d = new Date();
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      return `${d.getMonth() + 1}.${d.getDate()} ${days[d.getDay()]}`;
+    }
+
+    function defaultState() {
+      return {
+        version: APP_VERSION,
+        routineSchema: ROUTINE_SCHEMA_VERSION,
+        today: todayKey(),
+        routines: clone(DEFAULT_ROUTINES),
+        sessions: {},
+        completed: {}
+      };
+    }
+
+    function defaultById(id) {
+      return DEFAULT_ROUTINES.find((routine) => routine.id === id) || DEFAULT_ROUTINES[0];
+    }
+
+    function normalizeStep(step, index, fallback) {
+      const source = fallback || {};
+      return {
+        id: step.id || source.id || `step_${Date.now()}_${index}_${Math.random().toString(36).slice(2, 7)}`,
+        icon: String(step.icon || source.icon || "·").slice(0, 4),
+        title: String(step.title || source.title || "새 단계"),
+        note: String(step.note ?? source.note ?? ""),
+        minutes: Math.max(1 / 6, Number(step.minutes ?? source.minutes) || 1)
+      };
+    }
+
+    function normalizeRoutineFromFixed(existing, fixed, resetToDefault = false) {
+      const oldSteps = Array.isArray(existing?.steps) ? existing.steps : [];
+      const sourceSteps = resetToDefault || oldSteps.length === 0 ? fixed.steps : oldSteps;
+      const steps = sourceSteps.map((step, idx) => {
+        const fixedStep = fixed.steps.find((item) => item.id === step.id) || fixed.steps[idx] || {};
+        return normalizeStep(step, idx, fixedStep);
+      });
+      return {
+        id: fixed.id,
+        icon: fixed.icon,
+        name: fixed.name,
+        color: fixed.color,
+        soft: fixed.soft,
+        doneText: fixed.doneText,
+        steps: steps.length ? steps : fixed.steps.map((step, idx) => normalizeStep(step, idx, step))
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : defaultState();
+        const base = defaultState();
+        if (!parsed || typeof parsed !== "object") return base;
+
+        const shouldResetDefaultRoutines = parsed.routineSchema !== ROUTINE_SCHEMA_VERSION;
+        const oldRoutines = Array.isArray(parsed.routines) ? parsed.routines : [];
+        const oldReturn = oldRoutines.find((routine) => routine.id === "return");
+        const fixedRoutines = DEFAULT_ROUTINES.map((fixed) => {
+          const existing = oldRoutines.find((routine) => routine.id === fixed.id) || ((fixed.id === "lunch" || fixed.id === "dinner") ? oldReturn : null);
+          return normalizeRoutineFromFixed(existing, fixed, shouldResetDefaultRoutines);
+        });
+        const next = {
+          ...base,
+          ...parsed,
+          version: APP_VERSION,
+          routineSchema: ROUTINE_SCHEMA_VERSION,
+          routines: fixedRoutines,
+          sessions: shouldResetDefaultRoutines ? {} : (parsed.sessions && typeof parsed.sessions === "object" ? parsed.sessions : {}),
+          completed: shouldResetDefaultRoutines ? {} : (parsed.completed && typeof parsed.completed === "object" ? parsed.completed : {})
+        };
+        if (next.today !== todayKey()) {
+          next.today = todayKey();
+          next.completed = {};
+          next.sessions = {};
+        }
+        normalizeAllSessions(next);
+        return next;
+      } catch {
+        return defaultState();
+      }
+    }
+
+    function normalizeAllSessions(targetState = state) {
+      if (!targetState.sessions) targetState.sessions = {};
+      targetState.routines.forEach((routine) => {
+        const session = targetState.sessions[routine.id];
+        if (!session) return;
+        if (!Array.isArray(session.status) || session.status.length !== routine.steps.length) {
+          session.status = routine.steps.map((_, idx) => session.status?.[idx] || "pending");
+        }
+        if (!Array.isArray(session.history)) session.history = [];
+        session.index = Math.min(Math.max(0, Number(session.index) || 0), routine.steps.length - 1);
+        if (!Number.isFinite(session.remainingSec)) {
+          session.remainingSec = minutesToSeconds(routine.steps[session.index].minutes);
+        }
+        if (!Number.isFinite(session.lastTick)) session.lastTick = Date.now();
+      });
+    }
+
+    function saveState() {
+      state.version = APP_VERSION;
+      state.routineSchema = ROUTINE_SCHEMA_VERSION;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getRoutine(routineId) {
+      return state.routines.find((routine) => routine.id === routineId) || state.routines[0];
+    }
+
+    function getRoutineIndex(routineId) {
+      return state.routines.findIndex((routine) => routine.id === routineId);
+    }
+
+    function getSession(routineId) {
+      const routine = getRoutine(routineId);
+      if (!routine) return null;
+      const existing = state.sessions[routine.id];
+      if (!existing) {
+        state.sessions[routine.id] = makeSession(routine, true);
+        saveState();
+      } else {
+        if (!Array.isArray(existing.status) || existing.status.length !== routine.steps.length) {
+          existing.status = routine.steps.map((_, idx) => existing.status?.[idx] || "pending");
+        }
+        if (!Array.isArray(existing.history)) existing.history = [];
+        existing.index = Math.min(Math.max(0, Number(existing.index) || 0), routine.steps.length - 1);
+        if (!Number.isFinite(existing.remainingSec)) {
+          existing.remainingSec = minutesToSeconds(routine.steps[existing.index].minutes);
+        }
+        if (!Number.isFinite(existing.lastTick)) existing.lastTick = Date.now();
+      }
+      return state.sessions[routine.id];
+    }
+
+    function makeSession(routine, autoRun) {
+      return {
+        routineId: routine.id,
+        index: 0,
+        status: routine.steps.map(() => "pending"),
+        remainingSec: minutesToSeconds(routine.steps[0]?.minutes || 1),
+        running: autoRun,
+        lastTick: Date.now(),
+        startedAt: Date.now(),
+        history: []
+      };
+    }
+
+    function resetSession(routineId, autoRun = true) {
+      const routine = getRoutine(routineId);
+      if (!routine) return;
+      state.sessions[routine.id] = makeSession(routine, autoRun);
+      delete state.completed[routine.id];
+      saveState();
+    }
+
+    function minutesToSeconds(minutes) {
+      return Math.round((Number(minutes) || 0) * 60);
+    }
+
+    function formatTime(sec) {
+      const safe = Math.max(0, Math.ceil(sec));
+      const m = Math.floor(safe / 60);
+      const s = safe % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function formatTimerTime(sec) {
+      if (sec >= 0) return formatTime(sec);
+      return `+${formatTime(Math.abs(sec))}`;
+    }
+
+    function formatDuration(sec) {
+      const safe = Math.max(0, Math.round(sec));
+      const m = Math.floor(safe / 60);
+      const s = safe % 60;
+      if (m <= 0) return `${s}초`;
+      if (s === 0) return `${m}분`;
+      return `${m}분 ${s}초`;
+    }
+
+    function totalSeconds(routine) {
+      return routine.steps.reduce((sum, step) => sum + minutesToSeconds(step.minutes), 0);
+    }
+
+    function setTheme(routine) {
+      const target = routine || state.routines[0] || DEFAULT_ROUTINES[0];
+      document.documentElement.style.setProperty("--accent", target.color || "#3c7d66");
+      document.documentElement.style.setProperty("--accent-soft", target.soft || "#dcebe4");
+    }
+
+    function showScreen(name) {
+      els.app.classList.toggle("run-mode", name === "run");
+      els.app.classList.toggle("edit-mode", name === "edit");
+      els.home.classList.toggle("active", name === "home");
+      els.run.classList.toggle("active", name === "run");
+      els.done.classList.toggle("active", name === "done");
+      els.edit.classList.toggle("active", name === "edit");
+    }
+
+    function renderHome() {
+      activeRoutineId = null;
+      stopTick();
+      showScreen("home");
+      setTheme(state.routines[0]);
+      els.todayLabel.textContent = todayKo();
+      els.routineList.innerHTML = "";
+
+      state.routines.forEach((routine) => {
+        const done = Boolean(state.completed[routine.id]);
+        const session = state.sessions[routine.id];
+        const current = session ? Math.min((session.index || 0) + 1, routine.steps.length) : 1;
+        const status = done ? "완료" : session ? `${current}/${routine.steps.length}` : "시작";
+        const btn = document.createElement("button");
+        btn.className = "routine-card";
+        btn.type = "button";
+        btn.innerHTML = `
+          <div class="routine-icon" style="background:${escapeAttr(routine.soft)}; color:${escapeAttr(routine.color)}">${escapeHtml(routine.icon)}</div>
+          <div>
+            <div class="routine-name">${escapeHtml(routine.name)}</div>
+            <div class="routine-meta">${routine.steps.length}단계 · 약 ${formatDuration(totalSeconds(routine))}</div>
+          </div>
+          <div class="routine-state ${done ? "finished" : ""}">${status}</div>
+        `;
+        btn.addEventListener("click", () => startRoutine(routine.id));
+        els.routineList.appendChild(btn);
+      });
+    }
+
+    function startRoutine(routineId) {
+      const routine = getRoutine(routineId) || state.routines[0];
+      if (!routine) return;
+      activeRoutineId = routine.id;
+      setTheme(routine);
+      getSession(routine.id);
+      showScreen("run");
+      lastPreviewKey = "";
+      renderRun();
+      startTick();
+    }
+
+    function renderStepPreview(routine, currentIndex) {
+      if (!els.stepPreview) return;
+      const previewKey = `${routine.id}|${currentIndex}|${routine.steps.map((step) => `${step.id}:${step.icon}:${step.title}`).join("|")}`;
+      if (lastPreviewKey === previewKey) return;
+      lastPreviewKey = previewKey;
+      const savedScrollLeft = els.stepPreview.scrollLeft || 0;
+      els.stepPreview.innerHTML = "";
+      routine.steps.forEach((step, idx) => {
+        const chip = document.createElement("div");
+        chip.className = `preview-chip ${idx === currentIndex ? "current" : ""}`;
+        chip.textContent = `${idx + 1}. ${step.icon ? step.icon + " " : ""}${step.title}`;
+        els.stepPreview.appendChild(chip);
+      });
+      requestAnimationFrame(() => {
+        els.stepPreview.scrollLeft = savedScrollLeft;
+      });
+    }
+
+    function renderRun() {
+      if (!activeRoutineId) return;
+      const routine = getRoutine(activeRoutineId);
+      const session = getSession(activeRoutineId);
+      if (!routine || !session) return;
+      const step = routine.steps[session.index];
+      if (!step) return completeRoutine();
+      const doneCount = session.status.filter((s) => s === "done" || s === "skipped").length;
+      const percent = Math.round((doneCount / routine.steps.length) * 100);
+      const stepTotal = minutesToSeconds(step.minutes);
+      const elapsed = stepTotal - session.remainingSec;
+      const angle = stepTotal > 0 ? (Math.max(0, Math.min(elapsed, stepTotal)) / stepTotal) * 360 : 360;
+      const isOverdue = session.remainingSec < 0;
+
+      els.runStepMeta.textContent = `${session.index + 1} / ${routine.steps.length}`;
+      els.sessionRoutineTitle.textContent = routine.name;
+      els.taskIcon.textContent = step.icon || "·";
+      els.progressFill.style.width = `${percent}%`;
+      els.timerRing.style.setProperty("--angle", `${Math.max(0, Math.min(360, angle))}deg`);
+      els.timerRing.classList.toggle("overdue", isOverdue);
+      els.timerLabel.textContent = "";
+      els.timerTime.textContent = formatTimerTime(session.remainingSec);
+      els.timerStatus.textContent = isOverdue ? "초과" : (session.running ? "진행" : "일시정지");
+      els.taskTitle.textContent = step.title;
+      els.pauseBtn.textContent = session.running ? "일시정지" : "재개";
+      els.undoBtn.disabled = !session.history.length;
+      renderStepPreview(routine, session.index);
+      const note = String(step.note || "").trim();
+      els.stepMemo.textContent = note;
+      els.stepMemo.classList.toggle("empty", !note);
+      els.stepMemo.parentElement.hidden = !note;
+    }
+
+    function pushHistory(session) {
+      session.history = session.history || [];
+      session.history.push({
+        index: session.index,
+        status: session.status.slice(),
+        remainingSec: session.remainingSec,
+        running: session.running,
+        lastTick: Date.now()
+      });
+      if (session.history.length > 40) session.history.shift();
+    }
+
+    function advance(status) {
+      if (!activeRoutineId) return;
+      const routine = getRoutine(activeRoutineId);
+      const session = getSession(activeRoutineId);
+      if (!routine || !session) return;
+      pushHistory(session);
+      session.status[session.index] = status;
+      session.index += 1;
+      if (session.index >= routine.steps.length) {
+        saveState();
+        completeRoutine();
+        return;
+      }
+      session.remainingSec = minutesToSeconds(routine.steps[session.index].minutes);
+      session.running = true;
+      session.lastTick = Date.now();
+      saveState();
+      renderRun();
+    }
+
+    function undoStep() {
+      if (!activeRoutineId) return;
+      const session = getSession(activeRoutineId);
+      if (!session || !session.history || !session.history.length) {
+        showToast("되돌릴 단계 없음");
+        return;
+      }
+      const snapshot = session.history.pop();
+      session.index = snapshot.index;
+      session.status = snapshot.status.slice();
+      session.remainingSec = snapshot.remainingSec;
+      session.running = false;
+      session.lastTick = Date.now();
+      delete state.completed[activeRoutineId];
+      saveState();
+      showScreen("run");
+      renderRun();
+      startTick();
+      showToast("되돌림");
+    }
+
+    function completeRoutine() {
+      if (!activeRoutineId) return;
+      const routine = getRoutine(activeRoutineId);
+      if (!routine) return;
+      state.completed[activeRoutineId] = new Date().toISOString();
+      saveState();
+      stopTick();
+      showScreen("done");
+      els.doneTitle.textContent = `${routine.name} 완료`;
+      els.doneText.textContent = routine.doneText || "오늘 완료.";
+      els.doneUndoBtn.disabled = !(state.sessions[activeRoutineId]?.history || []).length;
+      els.restartBtn.onclick = () => {
+        resetSession(routine.id, true);
+        startRoutine(routine.id);
+      };
+    }
+
+    function togglePause() {
+      if (!activeRoutineId) return;
+      const session = getSession(activeRoutineId);
+      if (!session) return;
+      session.running = !session.running;
+      session.lastTick = Date.now();
+      saveState();
+      renderRun();
+      showToast(session.running ? "재개" : "일시정지");
+    }
+
+    function tick() {
+      if (!activeRoutineId) return;
+      const session = getSession(activeRoutineId);
+      if (!session || !session.running) return;
+      const now = Date.now();
+      const delta = Math.floor((now - session.lastTick) / 1000);
+      if (delta <= 0) return;
+      session.lastTick = now;
+      session.remainingSec = session.remainingSec - delta;
+      saveState();
+      renderRun();
+    }
+
+    function startTick() {
+      stopTick();
+      tickId = window.setInterval(tick, 500);
+    }
+
+    function stopTick() {
+      if (tickId) window.clearInterval(tickId);
+      tickId = null;
+    }
+
+    function openEditor(routineId, fromScreen) {
+      previousScreen = fromScreen || "home";
+      stopTick();
+      if (routineId && getRoutine(routineId)) editRoutineId = routineId;
+      if (!getRoutine(editRoutineId)) editRoutineId = state.routines[0]?.id;
+      const routine = getRoutine(editRoutineId);
+      if (!editStepId || !routine.steps.some((step) => step.id === editStepId)) editStepId = null;
+      setTheme(routine);
+      showScreen("edit");
+      renderEditor();
+    }
+
+    function closeEditor() {
+      saveState();
+      if (previousScreen === "run" && activeRoutineId && getRoutine(activeRoutineId)) {
+        startRoutine(activeRoutineId);
+      } else {
+        renderHome();
+      }
+    }
+
+    function renderEditor() {
+      const routine = getRoutine(editRoutineId);
+      if (!routine) return renderHome();
+      setTheme(routine);
+      if (!editStepId || !routine.steps.some((step) => step.id === editStepId)) editStepId = null;
+      els.routineTabs.innerHTML = "";
+      state.routines.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `routine-tab ${item.id === routine.id ? "active" : ""}`;
+        btn.innerHTML = `<span>${escapeHtml(item.icon)}</span><span>${escapeHtml(item.name)}</span>`;
+        btn.addEventListener("click", () => {
+          editRoutineId = item.id;
+          editStepId = null;
+          renderEditor();
+        });
+        els.routineTabs.appendChild(btn);
+      });
+      els.editRoutineTitle.textContent = routine.name;
+      els.editTotalTime.textContent = `약 ${formatDuration(totalSeconds(routine))}`;
+      els.stepEditorList.innerHTML = "";
+      routine.steps.forEach((step, idx) => {
+        const isActive = editStepId === step.id;
+        const item = document.createElement("div");
+        const hasNote = String(step.note || "").trim().length > 0;
+        item.innerHTML = `
+          <button class="step-card ${isActive ? "active" : ""}" data-action="toggle-step" data-index="${idx}" type="button">
+            <div class="step-icon-tile" style="background:${escapeAttr(routine.soft)}; color:${escapeAttr(routine.color)}">${escapeHtml(step.icon || "·")}</div>
+            <div>
+              <div class="step-card-title">${escapeHtml(step.title)}</div>
+              ${hasNote ? `<div class="step-card-meta">${escapeHtml(step.note)}</div>` : ""}
+            </div>
+            <div class="step-time-pill">${formatDuration(minutesToSeconds(step.minutes))}</div>
+          </button>
+          <div class="step-detail ${isActive ? "active" : ""}">
+            <div class="field-row compact">
+              <input class="field short" data-field="icon" data-index="${idx}" maxlength="4" value="${escapeAttr(step.icon || "")}" placeholder="아이콘" autocomplete="off" autocorrect="off" spellcheck="false" />
+              <input class="field" data-field="title" data-index="${idx}" value="${escapeAttr(step.title)}" placeholder="단계 제목" autocomplete="off" />
+            </div>
+            <div class="duration-control">
+              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="-60" type="button">−1분</button>
+              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="-10" type="button">−10초</button>
+              <div class="duration-value">${formatDuration(minutesToSeconds(step.minutes))}</div>
+              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="10" type="button">+10초</button>
+              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="60" type="button">+1분</button>
+            </div>
+            <div class="memo-wrap ${hasNote ? "has-note" : "no-note"}">
+              <textarea class="edit-textarea" rows="2" data-field="note" data-index="${idx}" placeholder="메모" autocomplete="off">${escapeHtml(step.note || "")}</textarea>
+              <button class="clear-memo" data-action="clear-note" data-index="${idx}" type="button" aria-label="메모 지우기">×</button>
+            </div>
+            <div class="step-controls">
+              <button class="icon-btn" data-action="step-up" data-index="${idx}" type="button">위</button>
+              <button class="icon-btn" data-action="step-down" data-index="${idx}" type="button">아래</button>
+              <button class="icon-btn danger" data-action="step-delete" data-index="${idx}" type="button">삭제</button>
+            </div>
+          </div>
+        `;
+        els.stepEditorList.appendChild(item);
+      });
+      const addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "add-step-card";
+      addBtn.dataset.action = "step-add";
+      addBtn.textContent = "＋ 세부루틴 추가";
+      els.stepEditorList.appendChild(addBtn);
+    }
+
+    function formatMinutesInput(minutes) {
+      const n = Number(minutes);
+      if (!Number.isFinite(n)) return "1";
+      return String(Math.round(n * 100) / 100);
+    }
+
+    function updateStepField(index, field, value) {
+      const routine = getRoutine(editRoutineId);
+      if (!routine || !routine.steps[index]) return;
+      if (field === "icon") routine.steps[index].icon = String(value || "·").slice(0, 4);
+      if (field === "title") routine.steps[index].title = String(value || "새 단계");
+      if (field === "note") routine.steps[index].note = String(value || "");
+      if (field === "minutes") {
+        const parsed = Number(String(value).replace(",", "."));
+        routine.steps[index].minutes = Math.max(1 / 6, Number.isFinite(parsed) ? parsed : 1);
+      }
+      normalizeSessionAfterRoutineEdit(routine.id);
+      saveState();
+      if (activeRoutineId === routine.id) renderRun();
+      els.editTotalTime.textContent = `약 ${formatDuration(totalSeconds(routine))}`;
+    }
+
+    function adjustStepDuration(index, deltaSeconds) {
+      const routine = getRoutine(editRoutineId);
+      if (!routine || !routine.steps[index]) return;
+      const step = routine.steps[index];
+      const prevSec = minutesToSeconds(step.minutes);
+      const nextSec = Math.max(10, prevSec + deltaSeconds);
+      step.minutes = nextSec / 60;
+      const session = state.sessions[routine.id];
+      if (session && session.index === index) {
+        const elapsed = Math.max(0, prevSec - Number(session.remainingSec || 0));
+        session.remainingSec = Math.max(0, nextSec - elapsed);
+      }
+      normalizeSessionAfterRoutineEdit(routine.id);
+      saveState();
+      renderEditor();
+      if (activeRoutineId === routine.id) renderRun();
+    }
+
+    function normalizeSessionAfterRoutineEdit(routineId) {
+      const routine = getRoutine(routineId);
+      const session = state.sessions[routineId];
+      if (!routine) return;
+      if (!routine.steps.length) routine.steps.push(makeNewStep(routine.steps.length));
+      if (!session) return;
+      session.status = routine.steps.map((_, idx) => session.status?.[idx] || "pending");
+      session.index = Math.min(session.index || 0, routine.steps.length - 1);
+      if (session.index < 0) session.index = 0;
+    }
+
+    function moveItem(array, from, to) {
+      if (to < 0 || to >= array.length || from < 0 || from >= array.length) return false;
+      const [item] = array.splice(from, 1);
+      array.splice(to, 0, item);
+      return true;
+    }
+
+    function makeNewStep(index) {
+      return { id: `s_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, icon: "·", title: `새 단계 ${index + 1}`, note: "", minutes: 1 };
+    }
+
+    function showToast(text) {
+      els.toast.textContent = text;
+      els.toast.classList.add("show");
+      window.clearTimeout(showToast._timer);
+      showToast._timer = window.setTimeout(() => els.toast.classList.remove("show"), 1400);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char]));
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value).replace(/'/g, "&#39;");
+    }
+
+    els.openEditBtn.addEventListener("click", () => openEditor(state.routines[0]?.id, "home"));
+    els.closeEditBtn.addEventListener("click", closeEditor);
+    els.backBtn.addEventListener("click", renderHome);
+    els.undoBtn.addEventListener("click", undoStep);
+    els.doneUndoBtn.addEventListener("click", undoStep);
+    els.completeBtn.addEventListener("click", () => advance("done"));
+    els.skipBtn.addEventListener("click", () => advance("skipped"));
+    els.pauseBtn.addEventListener("click", togglePause);
+    els.doneHomeBtn.addEventListener("click", renderHome);
+    els.stepEditorList.addEventListener("input", (event) => {
+      const target = event.target;
+      const field = target.dataset.field;
+      const index = Number(target.dataset.index);
+      if (!field || !Number.isInteger(index)) return;
+      updateStepField(index, field, target.value);
+    });
+
+    els.stepEditorList.addEventListener("change", (event) => {
+      const target = event.target;
+      const field = target.dataset.field;
+      const index = Number(target.dataset.index);
+      if (!field || !Number.isInteger(index)) return;
+      if (field === "icon" || field === "title") renderEditor();
+    });
+
+    els.stepEditorList.addEventListener("click", (event) => {
+      const button = event.target.closest("button");
+      if (!button) return;
+      const action = button.dataset.action;
+      const routine = getRoutine(editRoutineId);
+      if (!routine) return;
+      if (action === "step-add") {
+        const nextStep = makeNewStep(routine.steps.length);
+        routine.steps.push(nextStep);
+        editStepId = nextStep.id;
+        normalizeSessionAfterRoutineEdit(routine.id);
+        saveState();
+        renderEditor();
+        return;
+      }
+      const index = Number(button.dataset.index);
+      if (!Number.isInteger(index)) return;
+      if (action === "adjust-time") {
+        const delta = Number(button.dataset.delta);
+        if (Number.isFinite(delta)) adjustStepDuration(index, delta);
+        return;
+      }
+      if (action === "toggle-step") {
+        editStepId = editStepId === routine.steps[index].id ? null : routine.steps[index].id;
+        renderEditor();
+      }
+      if (action === "clear-note") {
+        routine.steps[index].note = "";
+        saveState();
+        renderEditor();
+        showToast("메모 비움");
+      }
+      if (action === "step-up") {
+        if (moveItem(routine.steps, index, index - 1)) {
+          editStepId = routine.steps[index - 1].id;
+          normalizeSessionAfterRoutineEdit(routine.id);
+          saveState();
+          renderEditor();
+        }
+      }
+      if (action === "step-down") {
+        if (moveItem(routine.steps, index, index + 1)) {
+          editStepId = routine.steps[index + 1].id;
+          normalizeSessionAfterRoutineEdit(routine.id);
+          saveState();
+          renderEditor();
+        }
+      }
+      if (action === "step-delete") {
+        if (routine.steps.length <= 1) {
+          showToast("마지막 단계는 삭제 불가");
+          return;
+        }
+        const removed = routine.steps.splice(index, 1)[0];
+        if (editStepId === removed.id) editStepId = null;
+        normalizeSessionAfterRoutineEdit(routine.id);
+        saveState();
+        renderEditor();
+      }
+    });
+
+    window.addEventListener("visibilitychange", () => {
+      if (!activeRoutineId) return;
+      const session = getSession(activeRoutineId);
+      if (!session) return;
+      session.lastTick = Date.now();
+      saveState();
+    });
+
+    function initFromUrl() {
+      els.todayLabel.textContent = todayKo();
+      const params = new URLSearchParams(window.location.search);
+      let routineId = params.get("routine");
+      if (routineId === "return") routineId = "lunch";
+      if (routineId && getRoutine(routineId)) startRoutine(routineId);
+      else renderHome();
+    }
+
+    initFromUrl();
+  </script>
+</body>
+</html>
