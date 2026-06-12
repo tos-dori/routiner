@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Routine" />
   <meta name="theme-color" content="#f5f0e8" />
-  <title>Routine v1.3</title>
+  <title>Routine v1.7</title>
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="portrait" />
   <script>
@@ -142,6 +142,15 @@
       font-size: 12px;
       font-weight: 850;
       white-space: nowrap;
+    }
+
+    .icon-top-btn {
+      width: 42px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      font-size: 18px;
+      line-height: 1;
     }
 
     .pill { display: inline-grid; place-items: center; }
@@ -296,6 +305,12 @@
 
     .step-preview::-webkit-scrollbar { display: none; }
 
+    .step-preview::before,
+    .step-preview::after {
+      content: "";
+      flex: 0 0 max(16px, calc(50% - 84px));
+    }
+
     .preview-chip {
       flex: 0 0 auto;
       max-width: 168px;
@@ -340,38 +355,39 @@
     }
 
     .task-zone {
-      text-align: center;
-      padding: 7px 4px 2px;
+      padding: 8px 6px 2px;
       flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      min-height: 66px;
     }
 
-    .routine-small {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-      margin-bottom: 5px;
-    }
+    .routine-small { display: none; }
 
     .task-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 18px;
+      width: 52px;
+      height: 52px;
+      border-radius: 19px;
       display: grid;
       place-items: center;
-      margin: 0 auto 7px;
+      flex: 0 0 auto;
       background: var(--accent-soft);
       color: var(--accent);
-      font-size: 26px;
+      font-size: 27px;
       font-weight: 900;
       box-shadow: inset 0 0 0 1px rgba(67, 54, 38, 0.08);
     }
 
     .task-title {
-      font-size: clamp(30px, 8.6vw, 44px);
-      line-height: 1.04;
+      font-size: clamp(28px, 8vw, 41px);
+      line-height: 1.05;
       font-weight: 950;
       letter-spacing: -0.07em;
       word-break: keep-all;
+      text-align: left;
+      min-width: 0;
     }
 
     .timer-zone {
@@ -435,29 +451,33 @@
     .memo-wrap {
       position: relative;
       margin: 0 2px 8px;
-      flex: 0 0 auto;
+      height: 66px;
+      flex: 0 0 66px;
     }
 
     .memo-input {
-      min-height: 0;
-      max-height: 46px;
+      height: 62px;
+      max-height: 62px;
       overflow-y: auto;
+      overflow-x: hidden;
       border: 1px solid var(--line);
       border-radius: 18px;
-      background: rgba(255,255,255,0.52);
-      padding: 7px 10px;
+      background: rgba(255,255,255,0.54);
+      padding: 6px 11px;
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.35;
-      font-weight: 750;
+      font-size: 13px;
+      line-height: 1.28;
+      font-weight: 760;
       white-space: pre-wrap;
       word-break: keep-all;
-      scrollbar-width: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(80,70,60,0.18) transparent;
+      -webkit-overflow-scrolling: touch;
     }
 
     .memo-input.empty {
-      color: rgba(129,120,107,0.52);
-      font-weight: 700;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .edit-textarea {
@@ -513,7 +533,7 @@
 
     .controls {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1.18fr 1fr;
       gap: 8px;
       margin-top: 0;
       flex: 0 0 auto;
@@ -540,7 +560,27 @@
       font-weight: 850;
     }
 
-    .sub-action.warn { color: var(--warn); }
+    .sub-action.step-nav-action {
+      display: grid;
+      place-items: center;
+      padding: 0;
+      color: var(--muted);
+    }
+
+    .sub-action.step-nav-action svg {
+      width: 25px;
+      height: 25px;
+      display: block;
+      fill: currentColor;
+    }
+
+    .sub-action.step-nav-action.forward {
+      color: var(--muted);
+    }
+    .sub-action:disabled {
+      opacity: 0.38;
+      cursor: default;
+    }
 
     .done-screen {
       flex-direction: column;
@@ -849,6 +889,101 @@
 
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+
+
+    /* v1.6 edit screen cleanup: remove nested box clutter and fix memo/control overlap */
+    /* v1.7 run memo + player controls refinement */
+    .step-detail {
+      border: 0;
+      background: transparent;
+      padding: 6px 2px 8px;
+      gap: 7px;
+    }
+
+    .step-detail .field-row,
+    .step-detail .field-row.compact {
+      grid-template-columns: 46px 1fr;
+      gap: 8px;
+    }
+
+    .step-detail .field {
+      height: 42px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.68);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3);
+    }
+
+    .step-detail .field.short {
+      padding: 0;
+      text-align: center;
+    }
+
+    .step-detail .duration-control {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      gap: 6px;
+      grid-template-columns: 1fr 1fr 0.78fr 1fr 1fr;
+    }
+
+    .step-detail .duration-btn {
+      min-height: 36px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.68);
+      font-size: 12px;
+      padding: 0 2px;
+    }
+
+    .step-detail .duration-value {
+      min-height: 36px;
+      font-size: 15px;
+      font-weight: 950;
+    }
+
+    .step-detail .memo-wrap,
+    .step-detail .memo-wrap.has-note,
+    .step-detail .memo-wrap.no-note {
+      position: relative;
+      margin: 0;
+      height: auto;
+      flex: 0 0 auto;
+      min-height: 0;
+    }
+
+    .step-detail .edit-textarea {
+      min-height: 46px;
+      max-height: 46px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.68);
+      padding: 10px 38px 10px 12px;
+    }
+
+    .step-detail .memo-wrap.has-note .edit-textarea,
+    .step-detail .edit-textarea:focus {
+      min-height: 76px;
+      max-height: 108px;
+    }
+
+    .step-detail .clear-memo {
+      top: 8px;
+      right: 8px;
+      width: 30px;
+      height: 30px;
+    }
+
+    .step-detail .step-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 0;
+    }
+
+    .step-detail .icon-btn {
+      min-height: 36px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.68);
+    }
+
     @media (max-height: 760px) {
       .app { padding-top: 10px; gap: 10px; }
       .run-shell { min-height: auto; padding: 11px 8px 8px; border-radius: 28px; }
@@ -857,10 +992,11 @@
       .timer-zone { padding: 3px 0 5px; }
       .timer-ring { width: min(50vw, 190px); height: min(50vw, 190px); }
       .timer-time { font-size: clamp(34px, 10vw, 44px); }
-      .task-zone { padding: 7px 4px 2px; }
-      .task-icon { width: 48px; height: 48px; border-radius: 18px; font-size: 25px; margin-bottom: 6px; }
-      .task-title { font-size: clamp(27px, 7.4vw, 38px); }
-      .memo-input { min-height: 34px; max-height: 54px; font-size: 12px; }
+      .task-zone { padding: 7px 4px 2px; min-height: 58px; gap: 10px; }
+      .task-icon { width: 46px; height: 46px; border-radius: 17px; font-size: 24px; }
+      .task-title { font-size: clamp(26px, 7.2vw, 37px); }
+      .memo-wrap { height: 58px; flex-basis: 58px; margin-bottom: 6px; }
+      .memo-input { height: 54px; max-height: 54px; font-size: 12.5px; padding: 5px 10px; line-height: 1.24; }
       .edit-textarea { min-height: 44px; max-height: 44px; }
       .memo-wrap.has-note .edit-textarea, .edit-textarea:focus { min-height: 68px; max-height: 96px; }
       .main-action { height: 54px; }
@@ -885,11 +1021,9 @@
 
     <section class="run" id="runScreen" aria-label="루틴 진행">
       <header class="topbar">
-        <div class="top-left">
-          <button class="top-btn" id="backBtn" type="button">목록</button>
-          <button class="top-btn" id="undoBtn" type="button">되돌리기</button>
-        </div>
-        <div class="top-title" id="runStepMeta">1 / 1</div>
+        <button class="top-btn icon-top-btn" id="backBtn" type="button" aria-label="목록">☰</button>
+        <div class="top-title" id="runStepMeta">루틴 · 1 / 1</div>
+        <span class="top-spacer" aria-hidden="true"></span>
       </header>
       <div class="run-shell">
         <div class="preview-row" aria-label="세부루틴 미리보기">
@@ -919,8 +1053,13 @@
 
         <div class="controls">
           <button class="main-action" id="completeBtn" type="button">완료</button>
+          <button class="sub-action step-nav-action back" id="undoBtn" type="button" aria-label="이전 단계로 되돌리기">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7.5 5.5a1 1 0 0 1 1 1v3.02l8.45-4.02A1.05 1.05 0 0 1 18.5 6.45v11.1a1.05 1.05 0 0 1-1.55.95L8.5 14.48v3.02a1 1 0 1 1-2 0v-11a1 1 0 0 1 1-1Z"/></svg>
+          </button>
           <button class="sub-action" id="pauseBtn" type="button">일시정지</button>
-          <button class="sub-action warn" id="skipBtn" type="button">건너뛰기</button>
+          <button class="sub-action step-nav-action forward" id="skipBtn" type="button" aria-label="다음 단계로 건너뛰기">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M16.5 5.5a1 1 0 0 0-1 1v3.02L7.05 5.5A1.05 1.05 0 0 0 5.5 6.45v11.1a1.05 1.05 0 0 0 1.55.95l8.45-4.02v3.02a1 1 0 1 0 2 0v-11a1 1 0 0 0-1-1Z"/></svg>
+          </button>
         </div>
       </div>
     </section>
@@ -959,7 +1098,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const APP_VERSION = "1.3";
+    const APP_VERSION = "1.6";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
 
@@ -1090,6 +1229,7 @@
     let previousScreen = "home";
     let suppressStepMemoInput = false;
     let lastPreviewKey = "";
+    let shouldCenterPreview = false;
 
     function clone(value) {
       return JSON.parse(JSON.stringify(value));
@@ -1342,25 +1482,57 @@
       getSession(routine.id);
       showScreen("run");
       lastPreviewKey = "";
+      shouldCenterPreview = true;
       renderRun();
       startTick();
+    }
+
+    function centerPreviewChip(chip, behavior = "smooth") {
+      if (!els.stepPreview || !chip) return;
+      const container = els.stepPreview;
+      const containerRect = container.getBoundingClientRect();
+      const chipRect = chip.getBoundingClientRect();
+      const target = container.scrollLeft
+        + (chipRect.left - containerRect.left)
+        - ((container.clientWidth - chipRect.width) / 2);
+      const max = Math.max(0, container.scrollWidth - container.clientWidth);
+      container.scrollTo({
+        left: Math.max(0, Math.min(max, target)),
+        behavior
+      });
     }
 
     function renderStepPreview(routine, currentIndex) {
       if (!els.stepPreview) return;
       const previewKey = `${routine.id}|${currentIndex}|${routine.steps.map((step) => `${step.id}:${step.icon}:${step.title}`).join("|")}`;
-      if (lastPreviewKey === previewKey) return;
+      if (lastPreviewKey === previewKey) {
+        if (shouldCenterPreview) {
+          const currentChip = els.stepPreview.querySelector(".preview-chip.current");
+          requestAnimationFrame(() => {
+            centerPreviewChip(currentChip, "smooth");
+            shouldCenterPreview = false;
+          });
+        }
+        return;
+      }
       lastPreviewKey = previewKey;
       const savedScrollLeft = els.stepPreview.scrollLeft || 0;
       els.stepPreview.innerHTML = "";
+      let currentChip = null;
       routine.steps.forEach((step, idx) => {
         const chip = document.createElement("div");
         chip.className = `preview-chip ${idx === currentIndex ? "current" : ""}`;
         chip.textContent = `${idx + 1}. ${step.icon ? step.icon + " " : ""}${step.title}`;
         els.stepPreview.appendChild(chip);
+        if (idx === currentIndex) currentChip = chip;
       });
       requestAnimationFrame(() => {
-        els.stepPreview.scrollLeft = savedScrollLeft;
+        if (shouldCenterPreview && currentChip) {
+          centerPreviewChip(currentChip, "smooth");
+          shouldCenterPreview = false;
+        } else {
+          els.stepPreview.scrollLeft = savedScrollLeft;
+        }
       });
     }
 
@@ -1378,7 +1550,7 @@
       const angle = stepTotal > 0 ? (Math.max(0, Math.min(elapsed, stepTotal)) / stepTotal) * 360 : 360;
       const isOverdue = session.remainingSec < 0;
 
-      els.runStepMeta.textContent = `${session.index + 1} / ${routine.steps.length}`;
+      els.runStepMeta.textContent = `${routine.name} · ${session.index + 1} / ${routine.steps.length}`;
       els.sessionRoutineTitle.textContent = routine.name;
       els.taskIcon.textContent = step.icon || "·";
       els.progressFill.style.width = `${percent}%`;
@@ -1392,9 +1564,9 @@
       els.undoBtn.disabled = !session.history.length;
       renderStepPreview(routine, session.index);
       const note = String(step.note || "").trim();
-      els.stepMemo.textContent = note;
+      els.stepMemo.textContent = note || "";
       els.stepMemo.classList.toggle("empty", !note);
-      els.stepMemo.parentElement.hidden = !note;
+      els.stepMemo.parentElement.hidden = false;
     }
 
     function pushHistory(session) {
@@ -1426,6 +1598,7 @@
       session.running = true;
       session.lastTick = Date.now();
       saveState();
+      shouldCenterPreview = true;
       renderRun();
     }
 
@@ -1445,6 +1618,7 @@
       delete state.completed[activeRoutineId];
       saveState();
       showScreen("run");
+      shouldCenterPreview = true;
       renderRun();
       startTick();
       showToast("되돌림");
