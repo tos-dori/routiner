@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Routine" />
   <meta name="theme-color" content="#f5f0e8" />
-  <title>Routine v1.10</title>
+  <title>Routine v1.11</title>
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="portrait" />
   <script>
@@ -141,6 +141,31 @@
       text-overflow: ellipsis;
       text-align: center;
       flex: 1;
+    }
+
+    .run-topbar {
+      position: relative;
+      min-height: 36px;
+    }
+
+    .run-step-meta {
+      position: absolute;
+      left: 62px;
+      right: 62px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .departure-slot {
+      margin-left: auto;
+      width: 124px;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      z-index: 2;
+      overflow: hidden;
     }
 
     .top-btn, .pill {
@@ -316,10 +341,11 @@
 
     .step-preview::-webkit-scrollbar { display: none; }
 
-    .step-preview::before,
-    .step-preview::after {
-      content: "";
-      flex: 0 0 max(16px, calc(50% - 84px));
+    .preview-spacer {
+      flex: 0 0 16px;
+      width: 16px;
+      height: 1px;
+      pointer-events: none;
     }
 
     .preview-chip {
@@ -366,13 +392,13 @@
     }
 
     .task-zone {
-      padding: 8px 6px 2px;
+      padding: 14px 6px 1px;
       flex: 0 0 auto;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      min-height: 66px;
+      min-height: 74px;
     }
 
     .routine-small { display: none; }
@@ -404,7 +430,7 @@
     .timer-zone {
       display: grid;
       place-items: center;
-      padding: 3px 0 5px;
+      padding: 0 0 2px;
       flex: 1 1 auto;
       min-height: 0;
     }
@@ -424,6 +450,11 @@
     .timer-ring.overdue {
       background: conic-gradient(var(--warn) 360deg, rgba(181,107,67,0.18) 0deg);
       box-shadow: inset 0 0 0 1px rgba(181,107,67,0.25), 0 18px 50px rgba(181,107,67,0.16);
+    }
+
+    .timer-ring.paused:not(.overdue) {
+      background: conic-gradient(color-mix(in srgb, var(--accent) 58%, transparent) var(--angle), rgba(60,125,102,0.09) 0deg);
+      box-shadow: inset 0 0 0 1px rgba(67,54,38,0.09), 0 12px 34px rgba(60,125,102,0.09);
     }
 
     .timer-ring::after {
@@ -450,6 +481,11 @@
       font-weight: 950;
       letter-spacing: -0.065em;
       font-variant-numeric: tabular-nums;
+      transition: opacity 160ms ease, color 160ms ease;
+    }
+
+    .timer-ring.paused .timer-time {
+      opacity: 0.48;
     }
 
     .timer-status {
@@ -461,24 +497,24 @@
 
     .memo-wrap {
       position: relative;
-      margin: 0 2px 8px;
-      height: 66px;
-      flex: 0 0 66px;
+      margin: 0 2px 9px;
+      height: 82px;
+      flex: 0 0 82px;
     }
 
     .memo-input {
-      height: 62px;
-      max-height: 62px;
+      height: 78px;
+      max-height: 78px;
       overflow-y: auto;
       overflow-x: hidden;
       border: 1px solid var(--line);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.54);
-      padding: 6px 11px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.58);
+      padding: 8px 12px;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.28;
-      font-weight: 760;
+      font-size: 14px;
+      line-height: 1.34;
+      font-weight: 780;
       white-space: pre-wrap;
       word-break: keep-all;
       scrollbar-width: thin;
@@ -1000,19 +1036,20 @@
     .departure-pin {
       display: inline-flex;
       align-items: center;
-      max-width: 118px;
-      margin-left: 6px;
-      padding: 3px 7px;
+      justify-content: center;
+      max-width: 124px;
+      min-height: 32px;
+      padding: 0 10px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.62);
-      border: 1px solid var(--line);
-      color: var(--accent);
-      font-size: 11px;
+      background: color-mix(in srgb, var(--accent-soft) 72%, #fff 28%);
+      border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+      color: color-mix(in srgb, var(--accent) 86%, #2a241d 14%);
+      font-size: 12px;
       font-weight: 950;
-      vertical-align: middle;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
     }
 
     .departure-editor {
@@ -1056,14 +1093,14 @@
       .run-shell { min-height: auto; padding: 11px 8px 8px; border-radius: 28px; }
       .step-preview { padding: 5px 2px 7px; min-height: 48px; }
       .preview-chip { height: 36px; font-size: 13px; padding: 0 11px; }
-      .timer-zone { padding: 3px 0 5px; }
+      .timer-zone { padding: 0 0 2px; }
       .timer-ring { width: min(50vw, 190px); height: min(50vw, 190px); }
       .timer-time { font-size: clamp(34px, 10vw, 44px); }
-      .task-zone { padding: 7px 4px 2px; min-height: 58px; gap: 10px; }
+      .task-zone { padding: 10px 4px 1px; min-height: 62px; gap: 10px; }
       .task-icon { width: 46px; height: 46px; border-radius: 17px; font-size: 24px; }
       .task-title { font-size: clamp(26px, 7.2vw, 37px); }
-      .memo-wrap { height: 58px; flex-basis: 58px; margin-bottom: 6px; }
-      .memo-input { height: 54px; max-height: 54px; font-size: 12.5px; padding: 5px 10px; line-height: 1.24; }
+      .memo-wrap { height: 66px; flex-basis: 66px; margin-bottom: 6px; }
+      .memo-input { height: 62px; max-height: 62px; font-size: 13px; padding: 6px 10px; line-height: 1.28; }
       .edit-textarea { min-height: 44px; max-height: 44px; }
       .memo-wrap.has-note .edit-textarea, .edit-textarea:focus { min-height: 68px; max-height: 96px; }
       .main-action { height: 54px; }
@@ -1087,10 +1124,10 @@
     </section>
 
     <section class="run" id="runScreen" aria-label="루틴 진행">
-      <header class="topbar">
+      <header class="topbar run-topbar">
         <button class="top-btn icon-top-btn" id="backBtn" type="button" aria-label="목록">☰</button>
-        <div class="top-title" id="runStepMeta">루틴 · 1 / 1</div>
-        <span class="top-spacer" aria-hidden="true"></span>
+        <div class="top-title run-step-meta" id="runStepMeta">루틴 · 1 / 1</div>
+        <div class="departure-slot" id="departurePinSlot" aria-live="polite"></div>
       </header>
       <div class="run-shell">
         <div class="preview-row" aria-label="세부루틴 미리보기">
@@ -1165,7 +1202,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const APP_VERSION = "1.10";
+    const APP_VERSION = "1.11";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
 
@@ -1198,7 +1235,7 @@
         soft: "#e1e9f5",
         doneText: "복귀 완료. 방금 하던 자료부터 열자.",
         steps: [
-          { id: "l1", icon: "🍽", title: "점심 끝", note: "", minutes: 1 / 6 },
+          { id: "l1", icon: "🍽", title: "점심 끝", note: "", minutes: 0.25 },
           { id: "l2", icon: "💧", title: "물 마시기", note: "", minutes: 0.5 },
           { id: "l3", icon: "🚽", title: "화장실", note: "", minutes: 3 },
           { id: "l4", icon: "🧹", title: "자리 정리", note: "", minutes: 1.5 },
@@ -1215,7 +1252,7 @@
         soft: "#efe5ce",
         doneText: "복귀 완료. 방금 하던 자료부터 열자.",
         steps: [
-          { id: "d1", icon: "🍽", title: "저녁 끝", note: "", minutes: 1 / 6 },
+          { id: "d1", icon: "🍽", title: "저녁 끝", note: "", minutes: 0.25 },
           { id: "d2", icon: "💧", title: "물 마시기", note: "", minutes: 0.5 },
           { id: "d3", icon: "🚽", title: "화장실", note: "", minutes: 3 },
           { id: "d4", icon: "🧹", title: "자리 정리", note: "", minutes: 1.5 },
@@ -1265,7 +1302,7 @@
           { id: "n9", icon: "🪥", title: "세수·양치", note: "", minutes: 5 },
           { id: "n10", icon: "🧴", title: "로션·립밤", note: "", minutes: 1.5 },
           { id: "n11", icon: "🌙", title: "조명 낮추기", note: "", minutes: 0.5 },
-          { id: "n12", icon: "🛏", title: "침대 들어가기", note: "폰 없이", minutes: 1 / 3 }
+          { id: "n12", icon: "🛏", title: "침대 들어가기", note: "폰 없이", minutes: 0.25 }
         ]
       }
     ];
@@ -1289,6 +1326,7 @@
       backBtn: document.getElementById("backBtn"),
       undoBtn: document.getElementById("undoBtn"),
       runStepMeta: document.getElementById("runStepMeta"),
+      departurePinSlot: document.getElementById("departurePinSlot"),
       sessionRoutineTitle: document.getElementById("sessionRoutineTitle"),
       taskIcon: document.getElementById("taskIcon"),
       progressFill: document.getElementById("progressFill"),
@@ -1362,7 +1400,7 @@
         icon: String(step.icon || source.icon || "·").slice(0, 4),
         title: String(step.title || source.title || "새 단계"),
         note: String(step.note ?? source.note ?? ""),
-        minutes: Math.max(1 / 6, Number(step.minutes ?? source.minutes) || 1),
+        minutes: Math.max(0.25, Number(step.minutes ?? source.minutes) || 1),
         capture: step.capture || source.capture || null
       };
     }
@@ -1624,6 +1662,7 @@
     function centerPreviewChip(chip, behavior = "smooth") {
       if (!els.stepPreview || !chip) return;
       const container = els.stepPreview;
+      recalcPreviewEdgeSpacers();
       const containerRect = container.getBoundingClientRect();
       const chipRect = chip.getBoundingClientRect();
       const target = container.scrollLeft
@@ -1634,6 +1673,24 @@
         left: Math.max(0, Math.min(max, target)),
         behavior
       });
+    }
+
+    function setPreviewSpacerWidth(spacer, width) {
+      if (!spacer) return;
+      const next = `${Math.max(16, Math.round(width))}px`;
+      spacer.style.flexBasis = next;
+      spacer.style.width = next;
+    }
+
+    function recalcPreviewEdgeSpacers() {
+      const container = els.stepPreview;
+      if (!container) return;
+      const chips = Array.from(container.querySelectorAll(".preview-chip"));
+      const startSpacer = container.querySelector(".preview-spacer.start");
+      const endSpacer = container.querySelector(".preview-spacer.end");
+      if (!chips.length) return;
+      setPreviewSpacerWidth(startSpacer, (container.clientWidth - chips[0].offsetWidth) / 2);
+      setPreviewSpacerWidth(endSpacer, (container.clientWidth - chips[chips.length - 1].offsetWidth) / 2);
     }
 
     function renderStepPreview(routine, currentIndex) {
@@ -1652,6 +1709,9 @@
       lastPreviewKey = previewKey;
       const savedScrollLeft = els.stepPreview.scrollLeft || 0;
       els.stepPreview.innerHTML = "";
+      const startSpacer = document.createElement("span");
+      startSpacer.className = "preview-spacer start";
+      els.stepPreview.appendChild(startSpacer);
       let currentChip = null;
       routine.steps.forEach((step, idx) => {
         const chip = document.createElement("div");
@@ -1660,14 +1720,25 @@
         els.stepPreview.appendChild(chip);
         if (idx === currentIndex) currentChip = chip;
       });
+      const endSpacer = document.createElement("span");
+      endSpacer.className = "preview-spacer end";
+      els.stepPreview.appendChild(endSpacer);
       requestAnimationFrame(() => {
+        recalcPreviewEdgeSpacers();
         if (shouldCenterPreview && currentChip) {
           centerPreviewChip(currentChip, "smooth");
           shouldCenterPreview = false;
         } else {
-          els.stepPreview.scrollLeft = savedScrollLeft;
+          const max = Math.max(0, els.stepPreview.scrollWidth - els.stepPreview.clientWidth);
+          els.stepPreview.scrollLeft = Math.max(0, Math.min(max, savedScrollLeft));
         }
       });
+    }
+
+    function updateDeparturePin(text) {
+      if (!els.departurePinSlot) return;
+      const departureText = String(text || "").trim();
+      els.departurePinSlot.innerHTML = departureText ? `<span class="departure-pin">출발 ${escapeHtml(departureText)}</span>` : "";
     }
 
     function renderRun() {
@@ -1685,13 +1756,14 @@
       const isOverdue = session.remainingSec < 0;
 
       const departureText = String(session.departureText || "").trim();
-      const departurePin = departureText ? `<span class="departure-pin">출발 ${escapeHtml(departureText)}</span>` : "";
-      els.runStepMeta.innerHTML = `${escapeHtml(routine.name)} · ${session.index + 1} / ${routine.steps.length}${departurePin}`;
+      els.runStepMeta.textContent = `${routine.name} · ${session.index + 1} / ${routine.steps.length}`;
+      updateDeparturePin(departureText);
       els.sessionRoutineTitle.textContent = routine.name;
       els.taskIcon.textContent = step.icon || "·";
       els.progressFill.style.width = `${percent}%`;
       els.timerRing.style.setProperty("--angle", `${Math.max(0, Math.min(360, angle))}deg`);
       els.timerRing.classList.toggle("overdue", isOverdue);
+      els.timerRing.classList.toggle("paused", !session.running);
       els.timerLabel.textContent = "";
       els.timerTime.textContent = formatTimerTime(session.remainingSec);
       els.timerStatus.textContent = isOverdue ? "초과" : (session.running ? "진행" : "일시정지");
@@ -1705,12 +1777,15 @@
       if (isDepartureCapture) {
         els.stepMemo.classList.remove("empty");
         els.stepMemo.classList.add("has-departure");
-        els.stepMemo.innerHTML = `
-          <div class="departure-editor">
-            <label for="departureInput">출발</label>
-            <input id="departureInput" class="departure-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="예: 18:20" value="${escapeAttr(departureText)}" />
-          </div>
-        `;
+        const isEditingDeparture = document.activeElement?.id === "departureInput" && els.stepMemo.querySelector("#departureInput");
+        if (!isEditingDeparture) {
+          els.stepMemo.innerHTML = `
+            <div class="departure-editor">
+              <label for="departureInput">출발</label>
+              <input id="departureInput" class="departure-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="예: 11:50" value="${escapeAttr(departureText)}" />
+            </div>
+          `;
+        }
       } else {
         els.stepMemo.classList.remove("has-departure");
         els.stepMemo.textContent = note || "";
@@ -1927,7 +2002,7 @@
       if (field === "note") routine.steps[index].note = String(value || "");
       if (field === "minutes") {
         const parsed = Number(String(value).replace(",", "."));
-        routine.steps[index].minutes = Math.max(1 / 6, Number.isFinite(parsed) ? parsed : 1);
+        routine.steps[index].minutes = Math.max(0.25, Number.isFinite(parsed) ? parsed : 1);
       }
       normalizeSessionAfterRoutineEdit(routine.id);
       saveState();
@@ -1940,7 +2015,7 @@
       if (!routine || !routine.steps[index]) return;
       const step = routine.steps[index];
       const prevSec = minutesToSeconds(step.minutes);
-      const nextSec = Math.max(10, prevSec + deltaSeconds);
+      const nextSec = Math.max(15, prevSec + deltaSeconds);
       step.minutes = nextSec / 60;
       const session = state.sessions[routine.id];
       if (session && session.index === index) {
@@ -2004,13 +2079,7 @@
       if (!session) return;
       session.departureText = String(event.target.value || "").slice(0, 32);
       saveState();
-      renderRun();
-      const input = document.getElementById("departureInput");
-      if (input) {
-        input.focus({ preventScroll: true });
-        const len = input.value.length;
-        try { input.setSelectionRange(len, len); } catch (error) {}
-      }
+      updateDeparturePin(session.departureText);
     });
     els.doneHomeBtn.addEventListener("click", renderHome);
     els.stepEditorList.addEventListener("input", (event) => {
@@ -2123,6 +2192,11 @@
         saveState();
         renderEditor();
       }
+    });
+
+    window.addEventListener("resize", () => {
+      if (!els.stepPreview?.children.length) return;
+      requestAnimationFrame(recalcPreviewEdgeSpacers);
     });
 
     window.addEventListener("visibilitychange", () => {
