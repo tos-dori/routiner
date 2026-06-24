@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Routiner" />
-  <meta name="theme-color" content="#f5f0e8" />
+  <meta name="theme-color" content="#dff4ff" />
   <title>Routiner</title>
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="screen-orientation" content="portrait" />
@@ -19,8 +19,8 @@
         id: "./",
         start_url: "./",
         display: "standalone",
-        background_color: "#f5f0e8",
-        theme_color: "#f5f0e8",
+        background_color: "#dff4ff",
+        theme_color: "#dff4ff",
         orientation: "portrait-primary"
       };
       const link = document.createElement("link");
@@ -31,7 +31,7 @@
   </script>
   <style>
     :root {
-      --bg: #f5f0e8;
+      --bg: #edf9ff;
       --panel: rgba(255, 255, 255, 0.74);
       --panel-strong: #fffaf2;
       --ink: #28231d;
@@ -43,7 +43,11 @@
       --accent-soft: #dcebe4;
       --warn: #b56b43;
       --danger: #a64b43;
-      --shadow: 0 22px 70px rgba(74, 59, 42, 0.16);
+      --day-note-ink: #4f7688;
+      --day-note-label: rgba(79, 118, 136, 0.48);
+      --day-note-bg: rgba(238, 249, 253, 0.78);
+      --day-note-line: rgba(79, 118, 136, 0.20);
+      --shadow: none;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", sans-serif;
     }
 
@@ -56,7 +60,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: radial-gradient(circle at top left, #fff5df 0, transparent 36%), var(--bg);
+      background: radial-gradient(circle at top left, #dff4ff 0, transparent 36%), var(--bg);
       color: var(--ink);
       -webkit-tap-highlight-color: transparent;
       -webkit-text-size-adjust: 100%;
@@ -70,6 +74,10 @@
       justify-content: center;
       padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
       overflow: hidden;
+    }
+
+    body.plan-mode {
+      background: radial-gradient(circle at top left, #fff5df 0, transparent 36%), #f5f0e8;
     }
 
     button, input, textarea { font: inherit; }
@@ -91,6 +99,7 @@
     }
 
     .app {
+      position: relative;
       width: 100%;
       max-width: 430px;
       height: 100%;
@@ -104,6 +113,20 @@
       overscroll-behavior: contain;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+    }
+
+    .app.plan-mode::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at top left, #fff5df 0, transparent 36%), #f5f0e8;
+    }
+
+    .app.plan-mode > * {
+      position: relative;
+      z-index: 1;
     }
 
     .app::-webkit-scrollbar { width: 0; height: 0; }
@@ -228,6 +251,15 @@
       white-space: nowrap;
     }
 
+    .date-btn {
+      min-width: 64px;
+      text-align: center;
+    }
+
+    .edit-topbar .save-status {
+      justify-content: flex-start;
+    }
+
     .icon-top-btn svg {
       width: 22px;
       height: 22px;
@@ -270,6 +302,32 @@
       font-weight: 950;
     }
 
+    .day-plan-notice {
+      display: none;
+      margin: -2px 2px 2px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(255, 250, 242, 0.90);
+      border: 1px solid rgba(67, 54, 38, 0.12);
+      color: color-mix(in srgb, var(--ink) 76%, var(--muted));
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: -0.025em;
+      line-height: 1.35;
+    }
+
+    .app.plan-mode .day-plan-notice { display: block; }
+
+    .app.plan-mode .home {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+
     .routine-list, .step-card-list {
       display: flex;
       flex-direction: column;
@@ -277,31 +335,33 @@
     }
 
     .routine-card, .step-card {
+      --card-accent: var(--accent);
+      --card-soft: var(--accent-soft);
       width: 100%;
       text-align: left;
       background: rgba(255, 255, 255, 0.86);
       border: 1px solid rgba(67, 54, 38, 0.14);
       border-radius: 24px;
-      padding: 15px;
+      padding: 15px 14px 15px 15px;
       display: grid;
-      grid-template-columns: 48px 1fr auto;
+      grid-template-columns: 48px minmax(0, 1fr) 56px;
       align-items: center;
-      gap: 13px;
-      box-shadow: 0 13px 34px rgba(80, 65, 44, 0.09);
+      gap: 12px;
+      box-shadow: none;
       transition: transform 140ms ease, background 140ms ease, border 140ms ease, opacity 140ms ease, box-shadow 140ms ease, filter 140ms ease;
     }
 
     .routine-card.suggested {
-      background: linear-gradient(145deg, rgba(255, 250, 242, 0.98), var(--accent-soft));
-      border-color: color-mix(in srgb, var(--accent) 42%, transparent);
-      box-shadow: 0 14px 34px rgba(80, 65, 44, 0.12);
+      background: linear-gradient(145deg, rgba(247, 253, 255, 0.98), var(--card-soft));
+      border-color: color-mix(in srgb, var(--card-accent) 42%, transparent);
+      box-shadow: none;
     }
 
     .routine-card.done {
       opacity: 0.68;
       background: rgba(251, 246, 238, 0.80);
       border-color: rgba(67, 54, 38, 0.12);
-      box-shadow: 0 8px 20px rgba(80, 65, 44, 0.055);
+      box-shadow: none;
       filter: saturate(0.94);
     }
 
@@ -338,7 +398,7 @@
 
     .routine-card.long-pressing {
       transform: scale(0.962);
-      box-shadow: 0 7px 18px rgba(80, 65, 44, 0.075);
+      box-shadow: none;
     }
 
     .routine-icon, .step-icon-tile {
@@ -353,10 +413,64 @@
       font-weight: 900;
     }
 
+    .routine-card-body {
+      min-width: 0;
+    }
+
+    .routine-title-row {
+      min-width: 0;
+      min-height: 23px;
+      position: relative;
+      padding-right: 76px;
+      display: block;
+    }
+
+    .routine-card:not(.plan-card) .routine-title-row {
+      padding-right: 0;
+    }
+
     .routine-name, .step-card-title {
+      min-width: 0;
       font-size: 17px;
       font-weight: 900;
       letter-spacing: -0.025em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .routine-summary {
+      color: color-mix(in srgb, var(--muted) 50%, var(--faint));
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      white-space: nowrap;
+      opacity: 0.58;
+    }
+
+    .routine-title-row .routine-summary {
+      position: absolute;
+      top: 2px;
+      right: 0;
+    }
+
+    .routine-side {
+      width: 56px;
+      min-width: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      justify-self: end;
+      align-self: center;
+    }
+
+    .routine-side .routine-summary {
+      width: 56px;
+      text-align: center;
+      transform: translateY(-1px);
+      opacity: 0.50;
     }
 
     .routine-meta, .step-card-meta {
@@ -365,6 +479,111 @@
       font-size: 12px;
       font-weight: 650;
       line-height: 1.35;
+    }
+
+    .routine-note {
+      margin-top: 7px;
+      width: fit-content;
+      max-width: 100%;
+      padding: 5px 8px 6px;
+      border-radius: 12px;
+      background: var(--day-note-bg);
+      border: 1px solid var(--day-note-line);
+      color: var(--day-note-ink);
+      font-size: 12px;
+      font-weight: 680;
+      line-height: 1.28;
+      letter-spacing: -0.025em;
+      white-space: pre-line;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .routine-card.off .routine-note,
+    .routine-card.off .routine-summary {
+      display: none;
+    }
+
+    .routine-card.plan-card {
+      grid-template-columns: 48px minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .routine-card.plan-card.off .routine-icon {
+      opacity: 0.32;
+    }
+
+    .routine-card.plan-card.off .routine-state {
+      opacity: 1;
+      color: var(--muted);
+      background: rgba(255,255,255,0.38);
+      border-color: rgba(67,54,38,0.08);
+    }
+
+    .routine-card.plan-card.off .day-note-input {
+      display: none;
+    }
+
+    .plan-control-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 7px;
+    }
+
+    .plan-control-chip {
+      min-height: 28px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.54);
+      border: 1px solid rgba(67,54,38,0.12);
+      color: color-mix(in srgb, var(--ink) 64%, var(--muted));
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: -0.025em;
+    }
+
+    .plan-control-chip.active {
+      background: color-mix(in srgb, var(--card-accent) 12%, white);
+      border-color: color-mix(in srgb, var(--card-accent) 28%, rgba(67,54,38,0.12));
+      color: color-mix(in srgb, var(--card-accent) 76%, var(--ink));
+    }
+
+    .plan-control-chip.muted.active {
+      background: rgba(67,54,38,0.08);
+      border-color: rgba(67,54,38,0.12);
+      color: var(--muted);
+    }
+
+    .day-note-input {
+      width: 100%;
+      min-height: 54px;
+      max-height: 80px;
+      margin-top: 8px;
+      padding: 10px 11px;
+      border-radius: 14px;
+      border: 1px solid var(--day-note-line);
+      background: var(--day-note-bg);
+      color: var(--day-note-ink);
+      resize: none;
+      overflow-y: auto;
+      font-size: 16px;
+      line-height: 1.28;
+      font-weight: 620;
+      letter-spacing: -0.02em;
+      outline: none;
+    }
+
+    .day-note-input::placeholder {
+      color: var(--day-note-label);
+      font-weight: 650;
+    }
+
+    .step-card-meta {
+      white-space: pre-line;
+      line-height: 1.32;
     }
 
     .routine-state, .step-time-pill {
@@ -378,9 +597,19 @@
       white-space: nowrap;
     }
 
+    .routine-state {
+      width: 50px;
+      min-height: 31px;
+      padding: 5px 7px;
+      display: inline-grid;
+      place-items: center;
+      justify-self: end;
+      box-shadow: none;
+    }
+
     .routine-state.finished {
-      background: var(--accent);
-      color: var(--accent-ink);
+      background: var(--card-accent);
+      color: #fff;
       border-color: transparent;
     }
 
@@ -389,6 +618,47 @@
       border-color: transparent;
       color: transparent;
     }
+
+
+
+    .run-day-note {
+      flex: 0 0 auto;
+      width: min(100%, 328px);
+      margin: 8px auto 0;
+      padding: 7px 12px 9px;
+      border-radius: 16px;
+      background: var(--day-note-bg);
+      border: 1px solid var(--day-note-line);
+      color: var(--day-note-ink);
+      letter-spacing: -0.025em;
+      overflow: hidden;
+      box-shadow: none;
+    }
+
+    .run-day-note-label {
+      margin-bottom: 3px;
+      text-align: center;
+      color: var(--day-note-label);
+      font-size: 10px;
+      line-height: 1;
+      font-weight: 720;
+      letter-spacing: -0.02em;
+    }
+
+    .run-day-note-body {
+      color: var(--day-note-ink);
+      white-space: pre-line;
+      font-size: 13px;
+      font-weight: 640;
+      line-height: 1.28;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .run-day-note.empty { display: none; }
+
 
     .run {
       flex: 1;
@@ -691,7 +961,7 @@
       color: var(--accent-ink);
       font-size: 18px;
       font-weight: 950;
-      box-shadow: 0 14px 28px rgba(60, 125, 102, 0.24);
+      box-shadow: none;
     }
 
     .sub-action {
@@ -843,7 +1113,7 @@
       border: 1px solid var(--line);
       border-radius: 24px;
       padding: 12px 8px calc(12px + env(safe-area-inset-bottom));
-      box-shadow: 0 12px 34px rgba(74, 59, 42, 0.12);
+      box-shadow: none;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -1051,6 +1321,207 @@
       color: var(--muted);
       font-size: 14px;
       font-weight: 900;
+    }
+
+    .reset-routine-card {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.48);
+      border: 1px solid rgba(67,54,38,0.16);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+      margin-top: 2px;
+      flex: 0 0 auto;
+      position: relative;
+      z-index: 2;
+      pointer-events: auto;
+      touch-action: manipulation;
+    }
+
+    .reset-routine-card:active {
+      transform: scale(0.985);
+      background: rgba(255,255,255,0.68);
+    }
+
+    .reset-routine-card.confirm {
+      background: rgba(199, 95, 78, 0.12);
+      border-color: rgba(199, 95, 78, 0.26);
+      color: var(--danger);
+    }
+
+
+    .calendar-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: calc(env(safe-area-inset-top) + 14px) 12px calc(env(safe-area-inset-bottom) + 14px);
+      background: rgba(46, 39, 31, 0.20);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .calendar-overlay.active { display: flex; }
+
+    .calendar-panel {
+      width: min(100%, 430px);
+      max-height: 100%;
+      overflow: hidden;
+      border-radius: 28px;
+      background: rgba(255, 250, 242, 0.96);
+      border: 1px solid rgba(67, 54, 38, 0.14);
+      box-shadow: none;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .calendar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 2px 2px;
+    }
+
+    .calendar-title {
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+    }
+
+    .calendar-close {
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(67, 54, 38, 0.08);
+      color: var(--muted);
+      font-size: 25px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      color: rgba(129, 120, 107, 0.82);
+      font-size: 11px;
+      font-weight: 900;
+      text-align: center;
+      padding: 0 1px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+
+    .calendar-day {
+      min-height: 42px;
+      border-radius: 12px;
+      padding: 5px 2px 4px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(67, 54, 38, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      color: inherit;
+    }
+
+    button.calendar-day:active { transform: scale(0.975); }
+
+    .calendar-day.other-month {
+      opacity: 0.28;
+      background: rgba(255, 255, 255, 0.30);
+    }
+
+    .calendar-day.today {
+      background: rgba(255, 250, 242, 0.98);
+      border-color: color-mix(in srgb, var(--accent) 40%, rgba(67, 54, 38, 0.08));
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+
+    .calendar-day.selected {
+      background: rgba(255, 244, 221, 0.98);
+      border-color: rgba(184, 137, 58, 0.36);
+      box-shadow: inset 0 0 0 1px rgba(184, 137, 58, 0.18);
+    }
+
+    .calendar-date-number {
+      height: 13px;
+      font-size: 12px;
+      line-height: 13px;
+      font-weight: 920;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .calendar-slots {
+      width: max-content;
+      display: grid;
+      grid-template-columns: repeat(5, 5.5px);
+      grid-auto-rows: 5.5px;
+      gap: 2.2px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 2px;
+    }
+
+    .calendar-slot {
+      width: 5.5px;
+      height: 5.5px;
+      border-radius: 999px;
+      border: 1.25px solid rgba(129, 120, 107, 0.22);
+      background: transparent;
+    }
+
+    .calendar-slot.done {
+      background: color-mix(in srgb, var(--slot-color) 78%, #81786b);
+      border-color: color-mix(in srgb, var(--slot-color) 78%, #81786b);
+    }
+
+    .calendar-slot.active {
+      border-color: color-mix(in srgb, var(--slot-color) 58%, #81786b);
+      background: color-mix(in srgb, var(--slot-color) 12%, white);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.56);
+    }
+
+    .calendar-slot.has-note:not(.off):not(.blank) {
+      box-shadow:
+        0 0 0 2px color-mix(in srgb, var(--slot-color) 16%, transparent),
+        inset 0 0 0 1px rgba(255,255,255,0.56);
+    }
+
+    .calendar-slot.done.has-note {
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--slot-color) 16%, transparent);
+    }
+
+    .calendar-slot.none {
+      border-color: rgba(129, 120, 107, 0.20);
+      background: rgba(255,255,255,0.18);
+    }
+
+    .calendar-slot.off,
+    .calendar-slot.blank {
+      border-color: transparent;
+      background: transparent;
+    }
+
+    @media (max-height: 700px) {
+      .calendar-panel { padding: 13px; border-radius: 24px; gap: 8px; }
+      .calendar-day { min-height: 42px; border-radius: 11px; padding: 4px 2px 3px; gap: 2px; }
+      .calendar-slots { transform: scale(0.92); transform-origin: top center; }
     }
 
     .toast {
@@ -1416,6 +1887,8 @@
       .memo-wrap.has-note .edit-textarea, .edit-textarea:focus { min-height: 68px; max-height: 96px; }
       .main-action { height: 54px; }
       .sub-action { height: 42px; }
+      .run-day-note { margin-top: 6px; padding: 6px 10px 8px; }
+      .run-day-note-body { font-size: 12px; line-height: 1.24; }
     }
   </style>
 </head>
@@ -1423,13 +1896,14 @@
   <main class="app" id="app">
     <section class="home active" id="homeScreen" aria-label="루틴 선택">
       <header class="topbar">
-        <span class="today-text" id="todayLabel">오늘</span>
+        <button class="top-btn date-btn" id="todayLabel" type="button" aria-label="달력 열기">오늘</button>
         <span class="top-spacer" aria-hidden="true"></span>
         <button class="top-btn" id="openEditBtn" type="button">수정</button>
       </header>
       <div class="hero">
         <h1>Routiner</h1>
       </div>
+      <div class="day-plan-notice" id="dayPlanNotice" aria-live="polite"></div>
       <div class="routine-list" id="routineList"></div>
     </section>
 
@@ -1478,6 +1952,7 @@
           </button>
         </div>
       </div>
+      <div class="run-day-note empty" id="runDayNote"></div>
     </section>
 
     <section class="done-screen" id="doneScreen" aria-label="루틴 완료">
@@ -1498,10 +1973,10 @@
     </section>
 
     <section class="edit-screen" id="editScreen" aria-label="세부루틴 수정">
-      <header class="topbar">
-        <button class="top-btn" id="closeEditBtn" type="button">닫기</button>
-        <div class="top-title">세부루틴 수정</div>
+      <header class="topbar edit-topbar">
         <span class="save-status" id="saveStatus" aria-live="polite"></span>
+        <div class="top-title">세부루틴 수정</div>
+        <button class="top-btn" id="closeEditBtn" type="button" aria-label="수정 화면 닫기">닫기</button>
       </header>
       <div class="edit-panel">
         <div class="routine-tabs" id="routineTabs"></div>
@@ -1510,6 +1985,7 @@
           <span id="editTotalTime">약 0분</span>
         </div>
         <div class="step-editor-list" id="stepEditorList"></div>
+        <button class="reset-routine-card" id="resetRoutineBtn" data-action="reset-routine" type="button" aria-label="현재 루틴을 기본값으로 재설정">기본 루틴으로 재설정</button>
       </div>
     </section>
   </main>
@@ -1517,13 +1993,38 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="reward-pop" id="rewardPop" aria-hidden="true">✓</div>
+  <div class="calendar-overlay" id="calendarOverlay" aria-hidden="true">
+    <div class="calendar-panel" role="dialog" aria-modal="true" aria-label="월간 루틴 기록">
+      <header class="calendar-head">
+        <div class="calendar-title" id="calendarTitle">이번 달</div>
+        <button class="calendar-close" id="calendarCloseBtn" type="button" aria-label="달력 닫기">×</button>
+      </header>
+      <div class="calendar-weekdays" aria-hidden="true">
+        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+  </div>
 
   <script>
-    const APP_VERSION = "1.20";
+    const APP_VERSION = "1.37";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
     const DISPLAY_ROUTINE_ORDER = ["morning", "outing", "lunch", "dinner", "night"];
     const LONG_PRESS_MS = 560;
+    const NIGHT_DAYLOG_NOTE = [
+      "캘린더 체크하기",
+      "Today 옮기고 내일 계획 손보기",
+      "단축어 자동화 켜고 끄기"
+    ].join("\n");
+    const LEGACY_NIGHT_DAYLOG_NOTES = [
+      "빈칸 채우기",
+      "빈칸만 채우기",
+      "빈칸만",
+      "Today 옮기고 내일 계획 손보기",
+      "캘린더 체크하기\nToday 옮기고 내일 계획 손보기",
+      NIGHT_DAYLOG_NOTE
+    ];
 
     function defaultOffToday() {
       return { outing: true };
@@ -1547,16 +2048,13 @@
         soft: "#F3DDD9",
         doneText: "독서실 도착. 이제 첫 Step만 열면 된다.",
         steps: [
-          { id: "m1", icon: "🚽", title: "화장실", note: "", minutes: 2 },
-          { id: "m2", icon: "💧", title: "물 마시기", note: "", minutes: 0.5 },
-          { id: "m3", icon: "🍚", title: "아침 먹기", note: "", minutes: 12 },
-          { id: "m4", icon: "🚿", title: "씻기", note: "", minutes: 10 },
-          { id: "m5", icon: "👕", title: "옷 입기", note: "", minutes: 3 },
-          { id: "m6", icon: "🎒", title: "가방 챙기기", note: "충전기 · 자료 · 필기구", minutes: 2 },
-          { id: "m7", icon: "📅", title: "캘린더 확인", note: "고정 일정만", minutes: 0.75 },
-          { id: "m8", icon: "👟", title: "신발 신기", note: "", minutes: 1 },
-          { id: "m9", icon: "🚪", title: "독서실 출발", note: "", minutes: 0.25 },
-          { id: "m10", icon: "🚶", title: "독서실 이동", note: "", minutes: 8 }
+          { id: "m1", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
+          { id: "m2", icon: "🍚", title: "아침 먹기", note: "", minutes: 15 },
+          { id: "m3", icon: "🚿", title: "씻기", note: "", minutes: 10 },
+          { id: "m4", icon: "👕", title: "옷 입기", note: "양말까지", minutes: 4 },
+          { id: "m5", icon: "🎒", title: "가방 열기", note: "충전기, 자료, 필기구", minutes: 4 },
+          { id: "m6", icon: "🚪", title: "문 앞 확인하기", note: "폰, 지갑, 키, 이어폰", minutes: 2 },
+          { id: "m7", icon: "🚶", title: "독서실 가기", note: "", minutes: 8 }
         ]
       },
       {
@@ -1567,13 +2065,11 @@
         soft: "#EEF0CF",
         doneText: "복귀 완료. 방금 하던 자료부터 열자.",
         steps: [
-          { id: "l1", icon: "🍽", title: "점심 끝", note: "", minutes: 0.25 },
-          { id: "l2", icon: "💧", title: "물 마시기", note: "", minutes: 0.5 },
-          { id: "l3", icon: "🚽", title: "화장실", note: "", minutes: 3 },
-          { id: "l4", icon: "🧹", title: "자리 정리", note: "", minutes: 1.5 },
-          { id: "l5", icon: "↩", title: "독서실 복귀", note: "", minutes: 8 },
-          { id: "l6", icon: "🪑", title: "자리 앉기", note: "", minutes: 0.5 },
-          { id: "l7", icon: "📖", title: "방금 하던 자료 열기", note: "", minutes: 1 }
+          { id: "l1", icon: "💧", title: "물 마시기", note: "", minutes: 1 },
+          { id: "l2", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
+          { id: "l3", icon: "🧍", title: "일어나기", note: "자리 정리", minutes: 1 },
+          { id: "l4", icon: "↩", title: "독서실 가기", note: "", minutes: 8 },
+          { id: "l5", icon: "📖", title: "자료 열기", note: "방금 하던 것", minutes: 2 }
         ]
       },
       {
@@ -1582,15 +2078,13 @@
         name: "저녁 후 복귀",
         color: "#2389C7",
         soft: "#DCEFFA",
-        doneText: "복귀 완료. 방금 하던 자료부터 열자.",
+        doneText: "복귀 완료. 오늘 남은 것 하나만 열자.",
         steps: [
-          { id: "d1", icon: "🍽", title: "저녁 끝", note: "", minutes: 0.25 },
-          { id: "d2", icon: "💧", title: "물 마시기", note: "", minutes: 0.5 },
-          { id: "d3", icon: "🚽", title: "화장실", note: "", minutes: 3 },
-          { id: "d4", icon: "🧹", title: "자리 정리", note: "", minutes: 1.5 },
-          { id: "d5", icon: "↩", title: "독서실 복귀", note: "", minutes: 8 },
-          { id: "d6", icon: "🪑", title: "자리 앉기", note: "", minutes: 0.5 },
-          { id: "d7", icon: "📖", title: "방금 하던 자료 열기", note: "", minutes: 1 }
+          { id: "d1", icon: "💧", title: "물 마시기", note: "", minutes: 1 },
+          { id: "d2", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
+          { id: "d3", icon: "🧍", title: "일어나기", note: "자리 정리", minutes: 1 },
+          { id: "d4", icon: "↩", title: "독서실 가기", note: "", minutes: 8 },
+          { id: "d5", icon: "📖", title: "자료 열기", note: "남은 것 하나", minutes: 2 }
         ]
       },
       {
@@ -1601,18 +2095,18 @@
         soft: "#F4E5CC",
         doneText: "외출 준비 완료. 출발하자.",
         steps: [
-          { id: "o1", icon: "🗺", title: "지도 보고 교통편 확인", note: "도착 시간 기준으로 보기", minutes: 2 },
-          { id: "o2", icon: "⏰", title: "출발 시각 적기", note: "", minutes: 0.75, capture: "departure" },
-          { id: "o3", icon: "👕", title: "옷 고르고 꺼내놓기", note: "샤워 후 바로 입을 것", minutes: 3 },
-          { id: "o4", icon: "🔌", title: "충전할 것 꽂기", note: "폰 · 보조배터리 · 이어폰", minutes: 0.75 },
-          { id: "o5", icon: "🚿", title: "샤워", note: "", minutes: 25 },
-          { id: "o6", icon: "🪒", title: "면도", note: "", minutes: 4 },
-          { id: "o7", icon: "🧴", title: "로션·립밤", note: "", minutes: 2 },
-          { id: "o8", icon: "🎒", title: "짐 챙기기", note: "지갑 · 키 · 학생증 · 충전기", minutes: 4 },
-          { id: "o9", icon: "🧥", title: "옷 입기", note: "", minutes: 4 },
-          { id: "o10", icon: "🪞", title: "거울 확인", note: "머리 · 옷 · 얼굴", minutes: 1.5 },
-          { id: "o11", icon: "👟", title: "가방 메고 신발 신기", note: "", minutes: 2 },
-          { id: "o12", icon: "🚪", title: "출발", note: "", minutes: 1 }
+          { id: "o1", icon: "🗺", title: "지도 열기", note: "도착 시간 보기", minutes: 3 },
+          { id: "o2", icon: "⏰", title: "출발 시각 적기", note: "", minutes: 1, capture: "departure" },
+          { id: "o3", icon: "👕", title: "옷 꺼내기", note: "바지 - (신발) - 아우터 - 상의\n+속옷, 양말", minutes: 5 },
+          { id: "o4", icon: "🔌", title: "충전 꽂기", note: "폰, 보조배터리, 이어폰", minutes: 2 },
+          { id: "o5", icon: "🚿", title: "샤워하기", note: "", minutes: 25 },
+          { id: "o6", icon: "🪒", title: "면도하기", note: "", minutes: 4 },
+          { id: "o7", icon: "🧴", title: "로션 바르기", note: "립밤까지", minutes: 2 },
+          { id: "o8", icon: "🧥", title: "옷 입기", note: "", minutes: 4 },
+          { id: "o9", icon: "🎒", title: "가방 열기", note: "어제 안 챙긴 음식, 전자기기\n\n지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 4 },
+          { id: "o10", icon: "🪞", title: "거울 보기", note: "얼굴, 머리, 옷", minutes: 2 },
+          { id: "o11", icon: "👟", title: "신발 신기", note: "가방 메기", minutes: 2 },
+          { id: "o12", icon: "🚪", title: "나가기", note: "시간 확인", minutes: 1 }
         ]
       },
       {
@@ -1623,18 +2117,17 @@
         soft: "#EFE1F3",
         doneText: "오늘은 닫았다. 폰 없이 침대에 들어가자.",
         steps: [
-          { id: "n1", icon: "📒", title: "DayLog 빈칸 보정", note: "3~5칸만", minutes: 4 },
-          { id: "n2", icon: "✍️", title: "일기 3줄", note: "", minutes: 3 },
-          { id: "n3", icon: "💌", title: "썸원 답변 1개", note: "", minutes: 2 },
-          { id: "n4", icon: "📅", title: "내일 캘린더 확인", note: "고정 일정만", minutes: 1 },
-          { id: "n5", icon: "🧩", title: "내일 첫 Step 만들기", note: "첫 행동 하나", minutes: 3 },
-          { id: "n6", icon: "🛠", title: "루틴 수정", note: "필요한 것만", minutes: 2 },
-          { id: "n7", icon: "🎒", title: "내일 들고 갈 것 준비", note: "충전기 · 자료 · 지갑", minutes: 2 },
-          { id: "n8", icon: "🔌", title: "폰 침대 밖 충전", note: "손 안 닿게", minutes: 0.5 },
-          { id: "n9", icon: "🪥", title: "세수·양치", note: "", minutes: 5 },
-          { id: "n10", icon: "🧴", title: "로션·립밤", note: "", minutes: 1.5 },
-          { id: "n11", icon: "🌙", title: "조명 낮추기", note: "", minutes: 0.5 },
-          { id: "n12", icon: "🛏", title: "침대 들어가기", note: "폰 없이", minutes: 0.25 }
+          { id: "n1", icon: "📒", title: "DayLog 열기", note: NIGHT_DAYLOG_NOTE, minutes: 12 },
+          { id: "n2", icon: "✍️", title: "일기 쓰기", note: "3줄만", minutes: 3 },
+          { id: "n3", icon: "💌", title: "연락하기", note: "썸원도 쓰기", minutes: 15 },
+          { id: "n5", icon: "🧩", title: "첫 Step 정하기", note: "내일 할 일 시작부분 하나만 정하기", minutes: 4 },
+          { id: "n6", icon: "🎒", title: "준비물 챙기기", note: "음식, 전자기기 제외\n지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 5 },
+          { id: "n7", icon: "🔌", title: "폰 충전 꽂기", note: "침대 밖", minutes: 1 },
+          { id: "n8", icon: "🫧", title: "세수하기", note: "", minutes: 2 },
+          { id: "n9", icon: "🪥", title: "양치하기", note: "", minutes: 3 },
+          { id: "n10", icon: "🧴", title: "로션 바르기", note: "립밤까지", minutes: 1 },
+          { id: "n11", icon: "🌙", title: "불 끄기", note: "", minutes: 0.5 },
+          { id: "n12", icon: "🛏", title: "침대 눕기", note: "폰 없이", minutes: 0.5 }
         ]
       }
     ];
@@ -1646,7 +2139,12 @@
       done: document.getElementById("doneScreen"),
       edit: document.getElementById("editScreen"),
       todayLabel: document.getElementById("todayLabel"),
+      dayPlanNotice: document.getElementById("dayPlanNotice"),
       routineList: document.getElementById("routineList"),
+      calendarOverlay: document.getElementById("calendarOverlay"),
+      calendarTitle: document.getElementById("calendarTitle"),
+      calendarGrid: document.getElementById("calendarGrid"),
+      calendarCloseBtn: document.getElementById("calendarCloseBtn"),
       openEditBtn: document.getElementById("openEditBtn"),
       closeEditBtn: document.getElementById("closeEditBtn"),
       previewLeftBtn: document.getElementById("previewLeftBtn"),
@@ -1660,6 +2158,7 @@
       runStepMeta: document.getElementById("runStepMeta"),
       departurePinSlot: document.getElementById("departurePinSlot"),
       sessionRoutineTitle: document.getElementById("sessionRoutineTitle"),
+      runDayNote: document.getElementById("runDayNote"),
       taskIcon: document.getElementById("taskIcon"),
       progressFill: document.getElementById("progressFill"),
       stepPreview: document.getElementById("stepPreview"),
@@ -1679,7 +2178,8 @@
       restartBtn: document.getElementById("restartBtn"),
       toast: document.getElementById("toast"),
       rewardPop: document.getElementById("rewardPop"),
-      saveStatus: document.getElementById("saveStatus")
+      saveStatus: document.getElementById("saveStatus"),
+      resetRoutineBtn: document.getElementById("resetRoutineBtn")
     };
 
     let state = loadState();
@@ -1693,13 +2193,21 @@
     let wakeLockWanted = false;
     let lastPreviewKey = "";
     let shouldCenterPreview = false;
+    let selectedDateKey = todayKey();
+    let isDatePlanMode = false;
 
     function clone(value) {
       return JSON.parse(JSON.stringify(value));
     }
 
-    function todayKey() {
+    function routineDayDate() {
       const d = new Date();
+      if (d.getHours() < 7) d.setDate(d.getDate() - 1);
+      return d;
+    }
+
+    function todayKey() {
+      const d = routineDayDate();
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
@@ -1707,9 +2215,201 @@
     }
 
     function todayKo() {
-      const d = new Date();
+      const d = routineDayDate();
       const days = ["일", "월", "화", "수", "목", "금", "토"];
       return `${d.getMonth() + 1}.${d.getDate()} ${days[d.getDay()]}`;
+    }
+
+
+    function snapshotFromParts(completed = {}, offToday = {}, sessions = {}) {
+      const snapshot = {};
+      DISPLAY_ROUTINE_ORDER.forEach((id) => {
+        if (offToday?.[id]) snapshot[id] = "off";
+        else if (completed?.[id]) snapshot[id] = "done";
+        else if (sessions?.[id]) snapshot[id] = "active";
+        else snapshot[id] = "none";
+      });
+      return snapshot;
+    }
+
+    function updateTodayCalendar(targetState = state) {
+      if (!targetState) return;
+      if (!targetState.calendar || typeof targetState.calendar !== "object") targetState.calendar = {};
+      const key = todayKey();
+      const effectiveOff = { ...(targetState.offToday || {}) };
+      const plan = targetState.dayPlans && typeof targetState.dayPlans === "object" ? targetState.dayPlans[key] : null;
+      if (plan?.off && typeof plan.off === "object") {
+        Object.entries(plan.off).forEach(([routineId, off]) => {
+          if (off) effectiveOff[routineId] = true;
+          else delete effectiveOff[routineId];
+        });
+      }
+      const snapshot = snapshotFromParts(targetState.completed, effectiveOff, targetState.sessions);
+      if (plan?.statuses && typeof plan.statuses === "object") {
+        Object.entries(plan.statuses).forEach(([routineId, status]) => {
+          if (["done", "none", "off"].includes(status)) snapshot[routineId] = status;
+        });
+      }
+      targetState.calendar[key] = snapshot;
+    }
+
+    function dateKeyFromDate(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+
+
+    function normalizeDayPlans(source) {
+      const result = {};
+      Object.entries(source || {}).forEach(([key, raw]) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(key) || !raw || typeof raw !== "object") return;
+        const off = raw.off && typeof raw.off === "object" ? { ...raw.off } : {};
+        const notes = {};
+        if (raw.notes && typeof raw.notes === "object") {
+          Object.entries(raw.notes).forEach(([routineId, value]) => {
+            const text = String(value || "").slice(0, 240);
+            if (text.trim()) notes[routineId] = text;
+          });
+        }
+        const statuses = {};
+        if (raw.statuses && typeof raw.statuses === "object") {
+          Object.entries(raw.statuses).forEach(([routineId, value]) => {
+            const status = String(value || "");
+            if (["done", "none", "off"].includes(status)) statuses[routineId] = status;
+          });
+        }
+        result[key] = { off, notes, statuses };
+      });
+      return result;
+    }
+
+    function dateFromKey(key) {
+      const [y, m, d] = String(key || "").split("-").map(Number);
+      if (!y || !m || !d) return routineDayDate();
+      return new Date(y, m - 1, d);
+    }
+
+    function dateKeyKo(key) {
+      const d = dateFromKey(key);
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      return `${d.getMonth() + 1}.${d.getDate()} ${days[d.getDay()]}`;
+    }
+
+    function dateKeyPlanLabel(key) {
+      const d = dateFromKey(key);
+      const days = ["일", "월", "화", "수", "목", "금", "토"];
+      return `${d.getMonth() + 1}.${d.getDate()} (${days[d.getDay()]}) 루틴 수정하기`;
+    }
+
+    function isPastOrTodayKey(key) {
+      return String(key || "") <= todayKey();
+    }
+
+    function hasOwn(obj, key) {
+      return Object.prototype.hasOwnProperty.call(obj || {}, key);
+    }
+
+    function getDayPlan(key, create = false) {
+      if (!state.dayPlans || typeof state.dayPlans !== "object") state.dayPlans = {};
+      if (!state.dayPlans[key] && create) state.dayPlans[key] = { off: {}, notes: {}, statuses: {} };
+      const plan = state.dayPlans[key];
+      if (!plan) return null;
+      if (!plan.off || typeof plan.off !== "object") plan.off = {};
+      if (!plan.notes || typeof plan.notes !== "object") plan.notes = {};
+      if (!plan.statuses || typeof plan.statuses !== "object") plan.statuses = {};
+      return plan;
+    }
+
+    function cleanDayPlan(key) {
+      const plan = getDayPlan(key, false);
+      if (!plan) return;
+      Object.keys(plan.notes || {}).forEach((routineId) => {
+        if (!String(plan.notes[routineId] || "").trim()) delete plan.notes[routineId];
+      });
+      Object.keys(plan.statuses || {}).forEach((routineId) => {
+        if (!["done", "none", "off"].includes(String(plan.statuses[routineId]))) delete plan.statuses[routineId];
+      });
+      const hasNotes = Object.keys(plan.notes || {}).length > 0;
+      const hasOff = Object.keys(plan.off || {}).length > 0;
+      const hasStatuses = Object.keys(plan.statuses || {}).length > 0;
+      if (!hasNotes && !hasOff && !hasStatuses) delete state.dayPlans[key];
+    }
+
+    function defaultOffForRoutine(routineId) {
+      return Boolean(defaultOffToday()[routineId]);
+    }
+
+    function effectiveOffForDate(key, routineId) {
+      const plan = getDayPlan(key, false);
+      if (plan && hasOwn(plan.off, routineId)) return Boolean(plan.off[routineId]);
+      if (key === todayKey()) return Boolean(state.offToday?.[routineId]);
+      return defaultOffForRoutine(routineId);
+    }
+
+    function dayNoteFor(key, routineId) {
+      const plan = getDayPlan(key, false);
+      return String(plan?.notes?.[routineId] || "").trim();
+    }
+
+    function setDayNote(key, routineId, value) {
+      const plan = getDayPlan(key, true);
+      const text = String(value || "").slice(0, 240);
+      if (text.trim()) plan.notes[routineId] = text;
+      else delete plan.notes[routineId];
+      cleanDayPlan(key);
+      saveState();
+    }
+
+    function setPlanOff(key, routineId, off) {
+      const plan = getDayPlan(key, true);
+      plan.off[routineId] = Boolean(off);
+      if (key === todayKey()) {
+        if (off) state.offToday[routineId] = true;
+        else delete state.offToday[routineId];
+      }
+      cleanDayPlan(key);
+      saveState();
+    }
+
+    function explicitDayStatus(key, routineId) {
+      const plan = getDayPlan(key, false);
+      const manual = plan?.statuses?.[routineId];
+      if (["done", "none", "off"].includes(manual)) return manual;
+      const entry = key === todayKey() ? snapshotFromParts(state.completed, state.offToday, state.sessions) : state.calendar?.[key];
+      const status = entry?.[routineId];
+      if (["done", "active", "off", "none"].includes(status)) return status === "active" ? "none" : status;
+      return effectiveOffForDate(key, routineId) ? "off" : "none";
+    }
+
+    function setExplicitDayStatus(key, routineId, status) {
+      if (!["done", "none", "off"].includes(status)) return;
+      const plan = getDayPlan(key, true);
+      plan.statuses[routineId] = status;
+      if (!state.calendar || typeof state.calendar !== "object") state.calendar = {};
+      if (!state.calendar[key]) state.calendar[key] = {};
+      state.calendar[key][routineId] = status;
+      if (status === "off") {
+        plan.off[routineId] = true;
+        if (key === todayKey()) {
+          delete state.completed[routineId];
+          delete state.sessions[routineId];
+          state.offToday[routineId] = true;
+        }
+      } else {
+        if (defaultOffForRoutine(routineId)) plan.off[routineId] = false;
+        else delete plan.off[routineId];
+        if (key === todayKey()) {
+          delete state.offToday[routineId];
+          delete state.sessions[routineId];
+          if (status === "done") state.completed[routineId] = new Date().toISOString();
+          else delete state.completed[routineId];
+        }
+      }
+      cleanDayPlan(key);
+      saveState();
     }
 
     function defaultState() {
@@ -1720,7 +2420,9 @@
         routines: clone(DEFAULT_ROUTINES),
         sessions: {},
         completed: {},
-        offToday: defaultOffToday()
+        offToday: defaultOffToday(),
+        calendar: {},
+        dayPlans: {}
       };
     }
 
@@ -1758,6 +2460,130 @@
       };
     }
 
+    const COPY_MIGRATIONS = {
+      morning: {
+        m1: { oldNotes: ["물 한 모금"], newNote: "", oldMinutes: [2], newMinutes: 3 },
+        m2: { oldMinutes: [12], newMinutes: 15 },
+        m3: { oldNotes: ["세수, 샤워 필요하면 샤워", "세수, 머리, 샤워"], newNote: "", oldMinutes: [8], newMinutes: 10 },
+        m4: { oldNotes: [""], newNote: "양말까지", oldMinutes: [3], newMinutes: 4 },
+        m5: { oldMinutes: [3], newMinutes: 4 },
+        m6: { oldMinutes: [1], newMinutes: 2 }
+      },
+      lunch: {
+        l1: { oldMinutes: [0.5], newMinutes: 1 },
+        l2: { oldNotes: ["필요 없으면 넘기기"], newNote: "" },
+        l3: { oldNotes: [""], newNote: "자리 정리", oldMinutes: [0.5], newMinutes: 1 },
+        l5: { oldMinutes: [1], newMinutes: 2 }
+      },
+      dinner: {
+        d1: { oldMinutes: [0.5], newMinutes: 1 },
+        d2: { oldNotes: ["필요 없으면 넘기기"], newNote: "" },
+        d3: { oldNotes: [""], newNote: "자리 정리", oldMinutes: [0.5], newMinutes: 1 },
+        d5: { oldNotes: ["오늘 남은 것 하나"], newNote: "남은 것 하나", oldMinutes: [1], newMinutes: 2 }
+      },
+      outing: {
+        o1: {
+          oldNotes: ["도착 시간 기준"],
+          newNote: "도착 시간 보기",
+          oldMinutes: [2],
+          newMinutes: 3
+        },
+        o2: { oldMinutes: [0.75], newMinutes: 1 },
+        o3: {
+          oldNotes: ["양말까지", "상의, 하의, 양말", "바지, (신발), 아우터, 상의, 속옷, 양말"],
+          newNote: "바지 - (신발) - 아우터 - 상의\n+속옷, 양말",
+          oldMinutes: [3],
+          newMinutes: 5
+        },
+        o4: { oldMinutes: [1], newMinutes: 2 },
+        o9: {
+          oldNotes: ["지갑, 키, 학생증, 충전기", "어제 안 챙긴 음식, 전자기기"],
+          newNote: "어제 안 챙긴 음식, 전자기기\n\n지갑, 충전기, 우양산, 칫솔, 파우치",
+          oldMinutes: [3],
+          newMinutes: 4
+        },
+        o10: { oldMinutes: [1], newMinutes: 2 },
+        o11: { oldMinutes: [1], newMinutes: 2 },
+        o12: {
+          oldNotes: [""],
+          newNote: "시간 확인",
+          oldMinutes: [0.5],
+          newMinutes: 1
+        }
+      },
+      night: {
+        n1: {
+          oldNotes: LEGACY_NIGHT_DAYLOG_NOTES,
+          newNote: NIGHT_DAYLOG_NOTE,
+          oldMinutes: [5, 10],
+          newMinutes: 12
+        },
+        n3: {
+          oldTitles: ["연락 정리하기"],
+          newTitle: "연락하기",
+          oldNotes: ["썸원, 필요한 답장", "필요한 답장만"],
+          newNote: "썸원도 쓰기",
+          oldMinutes: [3],
+          newMinutes: 15
+        },
+        n5: {
+          oldNotes: ["하나만"],
+          newNote: "내일 할 일 시작부분 하나만 정하기",
+          oldMinutes: [2, 3],
+          newMinutes: 4
+        },
+        n6: {
+          oldTitles: ["들고 갈 것 적기"],
+          newTitle: "준비물 챙기기",
+          oldNotes: ["가방 메모", "가방에 넣을 것", "음식, 전자기기 제외, 지갑, 충전기, 우양산, 칫솔, 파우치", "음식, 전자기기 제외\n지갑, 충전기, 우양산, 칫솔, 파우치"],
+          newNote: "음식, 전자기기 제외\n지갑, 충전기, 우양산, 칫솔, 파우치",
+          oldMinutes: [2, 4],
+          newMinutes: 5
+        },
+        n7: {
+          oldNotes: ["침대 밖, 손 안 닿게"],
+          newNote: "침대 밖",
+          oldMinutes: [0.5],
+          newMinutes: 1
+        },
+        n12: { oldMinutes: [0.25], newMinutes: 0.5 }
+      }
+    };
+
+    function applyStepMigration(step, migration) {
+      if (!migration) return;
+      const note = String(step.note || "");
+      const minutes = Number(step.minutes);
+      if (migration.newTitle && (!migration.oldTitles || migration.oldTitles.includes(step.title))) {
+        step.title = migration.newTitle;
+      }
+      if (migration.newNote !== undefined && (!migration.oldNotes || migration.oldNotes.includes(note))) {
+        step.note = migration.newNote;
+      }
+      if (migration.newMinutes !== undefined && (!migration.oldMinutes || migration.oldMinutes.some((value) => Math.abs(minutes - Number(value)) < 0.001))) {
+        step.minutes = migration.newMinutes;
+      }
+    }
+
+    function removeLegacyNightCalendarStep(routine) {
+      if (routine.id !== "night" || !Array.isArray(routine.steps)) return;
+      routine.steps = routine.steps.filter((step) => {
+        if (step.id !== "n4") return true;
+        const isDefaultCalendar = step.title === "캘린더 열기" && ["내일 일정", "내일 일정 있는지 체크"].includes(String(step.note || ""));
+        return !isDefaultCalendar;
+      });
+    }
+
+    function applyCopyMigrations(routines) {
+      routines.forEach((routine) => {
+        const routineMigrations = COPY_MIGRATIONS[routine.id];
+        if (routineMigrations && Array.isArray(routine.steps)) {
+          routine.steps.forEach((step) => applyStepMigration(step, routineMigrations[step.id]));
+        }
+        removeLegacyNightCalendarStep(routine);
+      });
+    }
+
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -1766,12 +2592,18 @@
         if (!parsed || typeof parsed !== "object") return base;
 
         const shouldResetDefaultRoutines = parsed.routineSchema !== ROUTINE_SCHEMA_VERSION;
+        const calendar = parsed.calendar && typeof parsed.calendar === "object" ? { ...parsed.calendar } : {};
+        const dayPlans = parsed.dayPlans && typeof parsed.dayPlans === "object" ? normalizeDayPlans(parsed.dayPlans) : {};
         const oldRoutines = Array.isArray(parsed.routines) ? parsed.routines : [];
         const oldReturn = oldRoutines.find((routine) => routine.id === "return");
         const fixedRoutines = DEFAULT_ROUTINES.map((fixed) => {
           const existing = oldRoutines.find((routine) => routine.id === fixed.id) || ((fixed.id === "lunch" || fixed.id === "dinner") ? oldReturn : null);
           return normalizeRoutineFromFixed(existing, fixed, shouldResetDefaultRoutines);
         });
+        applyCopyMigrations(fixedRoutines);
+        if (parsed.today && parsed.today !== todayKey()) {
+          calendar[parsed.today] = snapshotFromParts(parsed.completed, parsed.offToday, parsed.sessions);
+        }
         const next = {
           ...base,
           ...parsed,
@@ -1780,7 +2612,9 @@
           routines: fixedRoutines,
           sessions: shouldResetDefaultRoutines ? {} : (parsed.sessions && typeof parsed.sessions === "object" ? parsed.sessions : {}),
           completed: shouldResetDefaultRoutines ? {} : (parsed.completed && typeof parsed.completed === "object" ? parsed.completed : {}),
-          offToday: shouldResetDefaultRoutines ? defaultOffToday() : (parsed.offToday && typeof parsed.offToday === "object" ? parsed.offToday : defaultOffToday())
+          offToday: shouldResetDefaultRoutines ? defaultOffToday() : (parsed.offToday && typeof parsed.offToday === "object" ? parsed.offToday : defaultOffToday()),
+          calendar,
+          dayPlans
         };
         if (next.today !== todayKey()) {
           next.today = todayKey();
@@ -1788,6 +2622,7 @@
           next.sessions = {};
           next.offToday = defaultOffToday();
         }
+        updateTodayCalendar(next);
         normalizeAllSessions(next);
         return next;
       } catch {
@@ -1816,6 +2651,8 @@
     function saveState() {
       state.version = APP_VERSION;
       state.routineSchema = ROUTINE_SCHEMA_VERSION;
+      if (!state.dayPlans || typeof state.dayPlans !== "object") state.dayPlans = {};
+      updateTodayCalendar(state);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
@@ -1896,6 +2733,11 @@
       return `${m}분 ${s}초`;
     }
 
+    function formatCardDuration(sec) {
+      const minutes = Math.max(1, Math.round((Number(sec) || 0) / 60));
+      return `${minutes}분`;
+    }
+
     function totalSeconds(routine) {
       return routine.steps.reduce((sum, step) => sum + minutesToSeconds(step.minutes), 0);
     }
@@ -1904,6 +2746,12 @@
       const target = routine || state.routines[0] || DEFAULT_ROUTINES[0];
       document.documentElement.style.setProperty("--accent", target.color || "#3c7d66");
       document.documentElement.style.setProperty("--accent-soft", target.soft || "#dcebe4");
+    }
+
+    function routineStyleVars(routine) {
+      const color = routine?.color || "#3c7d66";
+      const soft = routine?.soft || "#dcebe4";
+      return `--card-accent:${escapeAttr(color)}; --card-soft:${escapeAttr(soft)};`;
     }
 
     async function requestWakeLock() {
@@ -1945,8 +2793,11 @@
     }
 
     function showScreen(name) {
+      const planMode = name === "home" && (selectedDateKey !== todayKey() || isDatePlanMode);
       els.app.classList.toggle("run-mode", name === "run");
       els.app.classList.toggle("edit-mode", name === "edit");
+      els.app.classList.toggle("plan-mode", planMode);
+      document.body.classList.toggle("plan-mode", planMode);
       els.home.classList.toggle("active", name === "home");
       els.run.classList.toggle("active", name === "run");
       els.done.classList.toggle("active", name === "done");
@@ -1978,48 +2829,104 @@
 
     function toggleRoutineOffToday(routineId) {
       if (!state.offToday || typeof state.offToday !== "object") state.offToday = defaultOffToday();
-      if (state.offToday[routineId]) {
-        delete state.offToday[routineId];
-        showToast("다시 켬");
-      } else {
+      const nextOff = !effectiveOffForDate(todayKey(), routineId);
+      if (hasOwn(getDayPlan(todayKey(), false)?.off, routineId)) {
+        setPlanOff(todayKey(), routineId, nextOff);
+      } else if (nextOff) {
         state.offToday[routineId] = true;
-        showToast("오늘은 안 함");
+        saveState();
+      } else {
+        delete state.offToday[routineId];
+        saveState();
       }
-      saveState();
+      showToast(nextOff ? "오늘은 안 함" : "다시 켬");
       renderHome();
     }
 
     function renderHome() {
       activeRoutineId = null;
       stopTick();
+      if (!selectedDateKey) selectedDateKey = todayKey();
+      const isTodayView = selectedDateKey === todayKey() && !isDatePlanMode;
       showScreen("home");
       setTheme(state.routines[0]);
-      els.todayLabel.textContent = todayKo();
+      els.todayLabel.textContent = dateKeyKo(selectedDateKey);
+      els.todayLabel.setAttribute("aria-label", `${dateKeyKo(selectedDateKey)} 달력 열기`);
+      els.openEditBtn.textContent = isTodayView ? "수정" : "오늘";
+      els.dayPlanNotice.textContent = isTodayView ? "" : dateKeyPlanLabel(selectedDateKey);
       els.routineList.innerHTML = "";
 
-      const suggested = suggestedRoutineIds();
+      const suggested = isTodayView ? suggestedRoutineIds() : new Set();
       routinesForDisplay().forEach((routine) => {
-        const done = Boolean(state.completed[routine.id]);
-        const off = Boolean(state.offToday?.[routine.id]);
-        const session = state.sessions[routine.id];
+        const done = isTodayView && Boolean(state.completed[routine.id]);
+        const off = Boolean(effectiveOffForDate(selectedDateKey, routine.id));
+        const session = isTodayView ? state.sessions[routine.id] : null;
         const current = session ? Math.min((session.index || 0) + 1, routine.steps.length) : 1;
-        const status = off ? "" : (done ? "완료" : session ? `${current}/${routine.steps.length}` : "시작");
+        const status = off ? (isTodayView ? "" : "꺼짐") : (isTodayView ? (done ? "완료" : session ? `${current}/${routine.steps.length}` : "시작") : "켜짐");
+        const summary = `${routine.steps.length}단계 · ${formatCardDuration(totalSeconds(routine))}`;
+        const dayNote = dayNoteFor(selectedDateKey, routine.id);
+        const noteHtml = dayNote && !off ? `<div class="routine-note">${escapeHtml(dayNote)}</div>` : "";
         const cardClass = [
           "routine-card",
+          isTodayView ? "" : "plan-card",
           off ? "off" : "",
           !off && done ? "done" : "",
           !off && !done && suggested.has(routine.id) ? "suggested" : ""
         ].filter(Boolean).join(" ");
+
+        if (!isTodayView) {
+          const card = document.createElement("div");
+          const pastOrToday = isPastOrTodayKey(selectedDateKey);
+          const explicitStatus = explicitDayStatus(selectedDateKey, routine.id);
+          const controlHtml = pastOrToday
+            ? `
+              <div class="plan-control-row" role="group" aria-label="${escapeAttr(routine.name)} 상태">
+                ${[
+                  ["done", "완료"],
+                  ["none", "미실행"],
+                  ["off", "안 함"]
+                ].map(([value, label]) => `<button class="plan-control-chip ${explicitStatus === value ? "active" : ""} ${value === "none" || value === "off" ? "muted" : ""}" data-action="plan-status" data-routine-id="${escapeAttr(routine.id)}" data-status="${value}" type="button">${label}</button>`).join("")}
+              </div>
+            `
+            : `
+              <div class="plan-control-row" role="group" aria-label="${escapeAttr(routine.name)} 계획">
+                <button class="plan-control-chip ${!off ? "active" : ""}" data-action="plan-toggle" data-routine-id="${escapeAttr(routine.id)}" data-off="false" type="button">켜짐</button>
+                <button class="plan-control-chip ${off ? "active muted" : ""}" data-action="plan-toggle" data-routine-id="${escapeAttr(routine.id)}" data-off="true" type="button">꺼짐</button>
+              </div>
+            `;
+          card.className = cardClass;
+          card.setAttribute("style", routineStyleVars(routine));
+          card.innerHTML = `
+            <div class="routine-icon" style="background:${escapeAttr(routine.soft)}; color:${escapeAttr(routine.color)}">${escapeHtml(routine.icon)}</div>
+            <div class="routine-card-body">
+              <div class="routine-title-row">
+                <div class="routine-name">${escapeHtml(routine.name)}</div>
+                <div class="routine-summary">${escapeHtml(summary)}</div>
+              </div>
+              ${controlHtml}
+              <textarea class="day-note-input" data-routine-id="${escapeAttr(routine.id)}" rows="2" placeholder="이 날짜 메모" ${off ? "disabled" : ""}>${escapeHtml(dayNote)}</textarea>
+            </div>
+          `;
+          els.routineList.appendChild(card);
+          return;
+        }
+
         const btn = document.createElement("button");
         btn.className = cardClass;
         btn.type = "button";
+        btn.setAttribute("style", routineStyleVars(routine));
         btn.innerHTML = `
           <div class="routine-icon" style="background:${escapeAttr(routine.soft)}; color:${escapeAttr(routine.color)}">${escapeHtml(routine.icon)}</div>
-          <div>
-            <div class="routine-name">${escapeHtml(routine.name)}</div>
-            <div class="routine-meta">${routine.steps.length}단계 · 약 ${formatDuration(totalSeconds(routine))}</div>
+          <div class="routine-card-body">
+            <div class="routine-title-row">
+              <div class="routine-name">${escapeHtml(routine.name)}</div>
+            </div>
+            ${noteHtml}
           </div>
-          <div class="routine-state ${off ? "off" : done ? "finished" : ""}">${status}</div>
+          <div class="routine-side">
+            <div class="routine-summary">${escapeHtml(summary)}</div>
+            <div class="routine-state ${off ? "off" : done ? "finished" : ""}">${status}</div>
+          </div>
         `;
         let longPressTimer = null;
         let longPressed = false;
@@ -2048,8 +2955,16 @@
             longPressed = false;
             return;
           }
-          if (state.offToday?.[routine.id]) {
-            showToast("길게 눌러 켜기");
+          if (effectiveOffForDate(todayKey(), routine.id)) {
+            if (hasOwn(getDayPlan(todayKey(), false)?.off, routine.id)) setPlanOff(todayKey(), routine.id, false);
+            delete state.offToday[routine.id];
+            saveState();
+            renderHome();
+            showToast("오늘 할 루틴으로 켬");
+            return;
+          }
+          if (state.completed?.[routine.id]) {
+            renderDoneScreen(routine.id, false);
             return;
           }
           startRoutine(routine.id);
@@ -2058,10 +2973,101 @@
       });
     }
 
+
+    
+    function calendarEntryForKey(key) {
+      const actual = key === todayKey() ? (state.calendar?.[key] || snapshotFromParts(state.completed, state.offToday, state.sessions)) : (state.calendar?.[key] || null);
+      const plan = getDayPlan(key, false);
+      if (!actual && !plan) return null;
+      const snapshot = {};
+      DISPLAY_ROUTINE_ORDER.forEach((id) => {
+        const manualStatus = plan?.statuses?.[id];
+        if (["done", "none", "off"].includes(manualStatus)) {
+          snapshot[id] = manualStatus;
+          return;
+        }
+        const actualStatus = actual?.[id];
+        if (actualStatus && actualStatus !== "none" && actualStatus !== "blank") {
+          snapshot[id] = actualStatus;
+          return;
+        }
+        if (plan) {
+          const off = effectiveOffForDate(key, id);
+          if (off) snapshot[id] = "off";
+          else snapshot[id] = actualStatus || "none";
+          return;
+        }
+        snapshot[id] = actualStatus || "none";
+      });
+      return snapshot;
+    }
+
+    function renderCalendar() {
+      updateTodayCalendar(state);
+      const base = dateFromKey(selectedDateKey || todayKey());
+      const year = base.getFullYear();
+      const month = base.getMonth();
+      const first = new Date(year, month, 1);
+      const start = new Date(year, month, 1 - first.getDay());
+      const today = todayKey();
+      const routineColors = new Map(state.routines.map((routine) => [routine.id, routine.color]));
+      els.calendarTitle.textContent = `${year}년 ${month + 1}월`;
+      els.calendarGrid.innerHTML = "";
+      for (let i = 0; i < 42; i += 1) {
+        const cellDate = new Date(start);
+        cellDate.setDate(start.getDate() + i);
+        const key = dateKeyFromDate(cellDate);
+        const entry = calendarEntryForKey(key);
+        const inMonth = cellDate.getMonth() === month;
+        const day = document.createElement("button");
+        day.type = "button";
+        day.className = [
+          "calendar-day",
+          inMonth ? "" : "other-month",
+          key === today ? "today" : "",
+          key === selectedDateKey ? "selected" : ""
+        ].filter(Boolean).join(" ");
+        day.dataset.dateKey = key;
+        const plan = getDayPlan(key, false);
+        const slots = DISPLAY_ROUTINE_ORDER.map((id) => {
+          const status = entry ? (entry[id] || "none") : "blank";
+          const color = routineColors.get(id) || "#81786b";
+          const hasNote = Boolean(String(plan?.notes?.[id] || "").trim()) && status !== "off" && status !== "blank";
+          const slotClass = ["calendar-slot", status, hasNote ? "has-note" : ""].filter(Boolean).join(" ");
+          return `<span class="${escapeAttr(slotClass)}" style="--slot-color:${escapeAttr(color)}" aria-hidden="true"></span>`;
+        }).join("");
+        day.innerHTML = `
+          <div class="calendar-date-number">${cellDate.getDate()}</div>
+          <div class="calendar-slots" aria-hidden="true">${slots}</div>
+        `;
+        day.addEventListener("click", () => {
+          selectedDateKey = key;
+          isDatePlanMode = true;
+          closeCalendar();
+          renderHome();
+        });
+        els.calendarGrid.appendChild(day);
+      }
+    }
+
+    function openCalendar() {
+      renderCalendar();
+      els.calendarOverlay.classList.add("active");
+      els.calendarOverlay.setAttribute("aria-hidden", "false");
+    }
+
+    function closeCalendar() {
+      els.calendarOverlay.classList.remove("active");
+      els.calendarOverlay.setAttribute("aria-hidden", "true");
+    }
+
     function startRoutine(routineId) {
       const routine = getRoutine(routineId) || state.routines[0];
       if (!routine) return;
-      if (state.offToday?.[routine.id]) delete state.offToday[routine.id];
+      if (effectiveOffForDate(todayKey(), routine.id)) {
+        if (hasOwn(getDayPlan(todayKey(), false)?.off, routine.id)) setPlanOff(todayKey(), routine.id, false);
+        delete state.offToday[routine.id];
+      }
       activeRoutineId = routine.id;
       setTheme(routine);
       getSession(routine.id);
@@ -2172,6 +3178,13 @@
       els.runStepMeta.textContent = `${routine.name} · ${session.index + 1} / ${routine.steps.length}`;
       updateDeparturePin(departureText);
       els.sessionRoutineTitle.textContent = routine.name;
+      const runDayNote = dayNoteFor(todayKey(), routine.id);
+      if (runDayNote) {
+        els.runDayNote.innerHTML = `<div class="run-day-note-label">오늘 메모</div><div class="run-day-note-body">${escapeHtml(runDayNote)}</div>`;
+      } else {
+        els.runDayNote.innerHTML = "";
+      }
+      els.runDayNote.classList.toggle("empty", !runDayNote);
       els.taskIcon.textContent = step.icon || "·";
       els.progressFill.style.width = `${percent}%`;
       els.timerRing.style.setProperty("--angle", `${Math.max(0, Math.min(360, angle))}deg`);
@@ -2260,25 +3273,35 @@
       showToast("되돌림");
     }
 
+    function renderDoneScreen(routineId, celebrate = false) {
+      const routine = getRoutine(routineId);
+      if (!routine) return renderHome();
+      activeRoutineId = routine.id;
+      stopTick();
+      setTheme(routine);
+      showScreen("done");
+      els.done.classList.remove("celebrate");
+      if (celebrate) {
+        void els.done.offsetWidth;
+        els.done.classList.add("celebrate");
+      }
+      els.doneTitle.textContent = `${routine.name} 완료`;
+      els.doneText.textContent = routine.doneText || "오늘 완료.";
+      els.doneUndoBtn.disabled = !(state.sessions[routine.id]?.history || []).length;
+      els.restartBtn.onclick = () => {
+        resetSession(routine.id, true);
+        startRoutine(routine.id);
+      };
+      if (celebrate) showCelebration();
+    }
+
     function completeRoutine() {
       if (!activeRoutineId) return;
       const routine = getRoutine(activeRoutineId);
       if (!routine) return;
       state.completed[activeRoutineId] = new Date().toISOString();
       saveState();
-      stopTick();
-      showScreen("done");
-      els.done.classList.remove("celebrate");
-      void els.done.offsetWidth;
-      els.done.classList.add("celebrate");
-      els.doneTitle.textContent = `${routine.name} 완료`;
-      els.doneText.textContent = routine.doneText || "오늘 완료.";
-      els.doneUndoBtn.disabled = !(state.sessions[activeRoutineId]?.history || []).length;
-      showCelebration();
-      els.restartBtn.onclick = () => {
-        resetSession(routine.id, true);
-        startRoutine(routine.id);
-      };
+      renderDoneScreen(routine.id, true);
     }
 
     function togglePause() {
@@ -2328,6 +3351,7 @@
     }
 
     function closeEditor() {
+      clearResetRoutineArm();
       saveState();
       if (previousScreen === "run" && activeRoutineId && getRoutine(activeRoutineId)) {
         startRoutine(activeRoutineId);
@@ -2350,12 +3374,14 @@
         btn.addEventListener("click", () => {
           editRoutineId = item.id;
           editStepId = null;
+          clearResetRoutineArm();
           renderEditor();
         });
         els.routineTabs.appendChild(btn);
       });
       els.editRoutineTitle.textContent = routine.name;
       els.editTotalTime.textContent = `약 ${formatDuration(totalSeconds(routine))}`;
+      updateResetRoutineButton();
       els.stepEditorList.innerHTML = "";
       routine.steps.forEach((step, idx) => {
         const isActive = editStepId === step.id;
@@ -2401,6 +3427,61 @@
       addBtn.dataset.action = "step-add";
       addBtn.textContent = "＋ 세부루틴 추가";
       els.stepEditorList.appendChild(addBtn);
+    }
+
+    let resetRoutineArmedId = null;
+    let resetRoutineArmTimer = null;
+
+    function updateResetRoutineButton() {
+      if (!els.resetRoutineBtn) return;
+      const isArmed = resetRoutineArmedId === editRoutineId;
+      els.resetRoutineBtn.classList.toggle("confirm", isArmed);
+      els.resetRoutineBtn.textContent = isArmed ? "한 번 더 누르면 재설정" : "기본 루틴으로 재설정";
+      els.resetRoutineBtn.setAttribute(
+        "aria-label",
+        isArmed ? "한 번 더 누르면 현재 루틴을 기본값으로 재설정" : "현재 루틴을 기본값으로 재설정"
+      );
+    }
+
+    function clearResetRoutineArm() {
+      if (resetRoutineArmTimer) window.clearTimeout(resetRoutineArmTimer);
+      resetRoutineArmTimer = null;
+      resetRoutineArmedId = null;
+      updateResetRoutineButton();
+    }
+
+    function performResetCurrentRoutineToDefault() {
+      const routine = getRoutine(editRoutineId);
+      const fixed = defaultById(editRoutineId);
+      if (!routine || !fixed) return;
+      const index = state.routines.findIndex((item) => item.id === editRoutineId);
+      if (index < 0) return;
+      state.routines[index] = normalizeRoutineFromFixed(null, fixed, true);
+      delete state.sessions[editRoutineId];
+      delete state.completed[editRoutineId];
+      delete state.offToday[editRoutineId];
+      editStepId = null;
+      saveState();
+      showSaved();
+      showToast("기본 루틴으로 되돌림");
+      resetRoutineArmedId = null;
+      renderEditor();
+      if (activeRoutineId === editRoutineId) renderRun();
+    }
+
+    function requestResetCurrentRoutineToDefault() {
+      if (!getRoutine(editRoutineId) || !defaultById(editRoutineId)) return;
+      if (resetRoutineArmedId === editRoutineId) {
+        if (resetRoutineArmTimer) window.clearTimeout(resetRoutineArmTimer);
+        resetRoutineArmTimer = null;
+        performResetCurrentRoutineToDefault();
+        return;
+      }
+      resetRoutineArmedId = editRoutineId;
+      updateResetRoutineButton();
+      showToast("한 번 더 누르면 재설정");
+      if (resetRoutineArmTimer) window.clearTimeout(resetRoutineArmTimer);
+      resetRoutineArmTimer = window.setTimeout(clearResetRoutineArm, 4200);
     }
 
     function formatMinutesInput(minutes) {
@@ -2685,8 +3766,68 @@
       return escapeHtml(value).replace(/'/g, "&#39;");
     }
 
-    els.openEditBtn.addEventListener("click", () => openEditor(state.routines[0]?.id, "home"));
+    let lastResetButtonInvokeAt = 0;
+
+    function handleResetRoutineButton(event) {
+      if (!event.currentTarget || event.currentTarget !== els.resetRoutineBtn) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const now = Date.now();
+      if (now - lastResetButtonInvokeAt < 420) return;
+      lastResetButtonInvokeAt = now;
+      requestResetCurrentRoutineToDefault();
+    }
+
+    els.todayLabel.addEventListener("click", openCalendar);
+    els.calendarCloseBtn.addEventListener("click", closeCalendar);
+    els.calendarOverlay.addEventListener("click", (event) => {
+      if (event.target === els.calendarOverlay) closeCalendar();
+    });
+
+    els.routineList.addEventListener("input", (event) => {
+      const target = event.target;
+      if (!target?.classList?.contains("day-note-input")) return;
+      const routineId = target.dataset.routineId;
+      if (!routineId || (selectedDateKey === todayKey() && !isDatePlanMode)) return;
+      setDayNote(selectedDateKey, routineId, target.value);
+      renderCalendar();
+    });
+
+    els.routineList.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!target?.dataset?.action) return;
+      const routineId = target.dataset.routineId;
+      if (!routineId || (selectedDateKey === todayKey() && !isDatePlanMode)) return;
+      if (target.dataset.action === "plan-toggle") {
+        const nextOff = target.dataset.off === "true";
+        setPlanOff(selectedDateKey, routineId, nextOff);
+        showToast(nextOff ? "이 날짜는 안 함" : "이 날짜에 함");
+        renderHome();
+        renderCalendar();
+        return;
+      }
+      if (target.dataset.action === "plan-status") {
+        const nextStatus = target.dataset.status;
+        setExplicitDayStatus(selectedDateKey, routineId, nextStatus);
+        showToast(nextStatus === "done" ? "완료로 표시" : nextStatus === "off" ? "안 함으로 표시" : "미실행으로 표시");
+        renderHome();
+        renderCalendar();
+      }
+    });
+
+    els.openEditBtn.addEventListener("click", () => {
+      if (selectedDateKey !== todayKey() || isDatePlanMode) {
+        selectedDateKey = todayKey();
+        isDatePlanMode = false;
+        renderHome();
+        return;
+      }
+      openEditor(state.routines[0]?.id, "home");
+    });
     els.closeEditBtn.addEventListener("click", closeEditor);
+    els.resetRoutineBtn.addEventListener("pointerup", handleResetRoutineButton);
+    els.resetRoutineBtn.addEventListener("click", handleResetRoutineButton);
+    els.resetRoutineBtn.addEventListener("touchend", handleResetRoutineButton, { passive: false });
     els.backBtn.addEventListener("click", renderHome);
     els.undoBtn.addEventListener("click", undoStep);
     els.doneUndoBtn.addEventListener("click", undoStep);
@@ -2814,7 +3955,6 @@
         if (editStepId === removed.id) editStepId = null;
         normalizeSessionAfterRoutineEdit(routine.id);
         saveState();
-        showSaved();
         renderEditor();
       }
     });
@@ -2822,6 +3962,10 @@
     window.addEventListener("resize", () => {
       if (!els.stepPreview?.children.length) return;
       requestAnimationFrame(recalcPreviewEdgeSpacers);
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && els.calendarOverlay.classList.contains("active")) closeCalendar();
     });
 
     window.addEventListener("visibilitychange", () => {
@@ -2838,7 +3982,10 @@
     });
 
     function initFromUrl() {
-      els.todayLabel.textContent = todayKo();
+      selectedDateKey = todayKey();
+      isDatePlanMode = false;
+      els.todayLabel.textContent = dateKeyKo(selectedDateKey);
+      saveState();
       // v1.12: 홈 화면 웹앱 저장소 분리를 피하기 위해 query 진입을 사용하지 않는다.
       // 과거 ?routine=outing, ?edit=1 같은 링크로 열려도 즉시 기본 주소로 정리하고,
       // 앱 내부에서만 루틴 선택/수정을 진행한다.
