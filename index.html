@@ -282,8 +282,114 @@
       cursor: default;
     }
 
-    .home, .run, .done-screen, .edit-screen { display: none; }
-    .home.active, .run.active, .done-screen.active, .edit-screen.active { display: flex; }
+    .home, .run, .done-screen, .edit-screen, .auth-screen { display: none; }
+    .home.active, .run.active, .done-screen.active, .edit-screen.active, .auth-screen.active { display: flex; }
+
+    .auth-screen {
+      min-height: min(100%, 760px);
+      flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+      padding: 18px 4px;
+    }
+
+    .auth-card {
+      width: min(100%, 390px);
+      margin: 0 auto;
+      padding: 26px 18px 20px;
+      border-radius: 32px;
+      background: rgba(255,255,255,0.68);
+      border: 1px solid var(--line);
+      box-shadow: none;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .auth-title {
+      margin: 0 0 6px;
+      color: var(--ink);
+      font-size: clamp(36px, 12vw, 48px);
+      line-height: 0.95;
+      letter-spacing: -0.08em;
+      font-weight: 980;
+      text-align: center;
+    }
+
+    .auth-subtitle {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 760;
+      letter-spacing: -0.045em;
+      text-align: center;
+    }
+
+    .auth-form {
+      display: grid;
+      gap: 8px;
+    }
+
+    .auth-input {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.76);
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 720;
+      letter-spacing: -0.035em;
+      padding: 0 13px;
+      outline: none;
+    }
+
+    .auth-input:focus {
+      border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+      background: rgba(255,255,255,0.9);
+    }
+
+    .auth-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .auth-action {
+      height: 46px;
+      border-radius: 17px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.64);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: -0.045em;
+    }
+
+    .auth-action.primary {
+      background: var(--accent);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .auth-action:disabled, .auth-input:disabled {
+      opacity: 0.46;
+      cursor: default;
+    }
+
+    .auth-message {
+      min-height: 18px;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      letter-spacing: -0.035em;
+      text-align: center;
+    }
+
+    .auth-message.error {
+      color: #a64b3f;
+    }
 
     .home {
       flex-direction: column;
@@ -291,15 +397,128 @@
     }
 
     .hero {
+      position: relative;
       padding: 4px 2px 2px;
     }
 
     .hero h1 {
+      display: inline-block;
       margin: 0;
       font-size: 30px;
       line-height: 1.08;
       letter-spacing: -0.055em;
       font-weight: 950;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      cursor: default;
+      transition: transform 140ms ease, opacity 140ms ease;
+    }
+
+    .hero h1.long-pressing {
+      transform: scale(0.982);
+      opacity: 0.72;
+    }
+
+    .backup-panel {
+      position: absolute;
+      z-index: 80;
+      top: calc(100% + 8px);
+      left: 50%;
+      width: min(calc(100vw - 24px), 430px);
+      transform: translateX(-50%) translateY(-4px);
+      opacity: 0;
+      pointer-events: none;
+      display: grid;
+      grid-template-columns: minmax(0, 1.42fr) 62px 62px 70px;
+      gap: 6px;
+      padding: 7px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--line);
+      box-shadow: none;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .backup-panel.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .backup-input-wrap {
+      position: relative;
+      min-width: 0;
+    }
+
+    .backup-input {
+      width: 100%;
+      height: 34px;
+      resize: none;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,0.72);
+      color: color-mix(in srgb, var(--ink) 76%, var(--muted));
+      font-size: 16px;
+      line-height: 1.15;
+      font-weight: 650;
+      padding: 7px 27px 7px 9px;
+      outline: none;
+      white-space: nowrap;
+    }
+
+    .backup-input.valid {
+      border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+      background: rgba(255,255,255,0.88);
+    }
+
+    .backup-input::placeholder { color: rgba(129,120,107,0.52); }
+
+    .backup-clear {
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      width: 22px;
+      height: 22px;
+      transform: translateY(-50%);
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(67, 54, 38, 0.06);
+      color: rgba(129,120,107,0.72);
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .backup-action {
+      height: 34px;
+      border-radius: 13px;
+      background: rgba(255,255,255,0.64);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      padding: 0 6px;
+      white-space: nowrap;
+    }
+
+    .backup-action.primary {
+      background: var(--accent);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .backup-action:disabled {
+      opacity: 0.34;
+      color: var(--muted);
+      background: rgba(255,255,255,0.44);
+      border-color: var(--line);
+      cursor: default;
     }
 
     .day-plan-notice {
@@ -1894,14 +2113,39 @@
 </head>
 <body>
   <main class="app" id="app">
-    <section class="home active" id="homeScreen" aria-label="루틴 선택">
+    <section class="auth-screen active" id="authScreen" aria-label="로그인">
+      <div class="auth-card">
+        <h1 class="auth-title">Routiner</h1>
+        <p class="auth-subtitle">이메일로 연결</p>
+        <form class="auth-form" id="authForm">
+          <input class="auth-input" id="authEmail" type="email" placeholder="이메일" autocomplete="email" autocapitalize="off" spellcheck="false" required>
+          <input class="auth-input" id="authPassword" type="password" placeholder="비밀번호" autocomplete="current-password" required>
+          <div class="auth-actions">
+            <button class="auth-action primary" id="authLoginBtn" type="submit">로그인</button>
+            <button class="auth-action" id="authSignupBtn" type="button">처음 연결</button>
+          </div>
+          <div class="auth-message" id="authMessage" aria-live="polite">이메일/비밀번호를 입력해.</div>
+        </form>
+      </div>
+    </section>
+
+    <section class="home" id="homeScreen" aria-label="루틴 선택">
       <header class="topbar">
         <button class="top-btn date-btn" id="todayLabel" type="button" aria-label="달력 열기">오늘</button>
         <span class="top-spacer" aria-hidden="true"></span>
         <button class="top-btn" id="openEditBtn" type="button">수정</button>
       </header>
-      <div class="hero">
-        <h1>Routiner</h1>
+      <div class="hero" id="heroArea">
+        <h1 id="brandTitle" role="button" tabindex="0" aria-label="관리 패널 열기">Routiner</h1>
+        <div class="backup-panel" id="backupPanel" aria-hidden="true">
+          <div class="backup-input-wrap">
+            <textarea class="backup-input" id="backupInput" rows="1" placeholder="백업 JSON" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+            <button class="backup-clear" id="backupClearBtn" type="button" aria-label="백업 입력 비우기">×</button>
+          </div>
+          <button class="backup-action" id="backupImportBtn" type="button" disabled>Import</button>
+          <button class="backup-action primary" id="backupExportBtn" type="button">Export</button>
+          <button class="backup-action" id="backupLogoutBtn" type="button" disabled>로그아웃</button>
+        </div>
       </div>
       <div class="day-plan-notice" id="dayPlanNotice" aria-live="polite"></div>
       <div class="routine-list" id="routineList"></div>
@@ -2007,9 +2251,26 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.37";
+    const APP_VERSION = "1.43";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
+    const BACKUP_TAG = "ROUTINER_BACKUP_V1";
+    const BACKUP_SCHEMA = 1;
+    const FIRESTORE_TAG = "ROUTINER_FIRESTORE_STATE_V1";
+    const FIRESTORE_SCHEMA = 1;
+    const FIRESTORE_DOC_ID = "main";
+    const FIREBASE_SDK_VERSION = "12.15.0";
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyB-QEUJGVNhP2MaiTdVrcxVrUgYy-6-usc",
+      authDomain: "routiner-personal.firebaseapp.com",
+      projectId: "routiner-personal",
+      storageBucket: "routiner-personal.firebasestorage.app",
+      messagingSenderId: "864215206596",
+      appId: "1:864215206596:web:89ea47bab1456e5f16d791"
+    };
+    const LOCAL_UPDATED_AT_KEY = `${STORAGE_KEY}__updatedAt`;
+    const DAY_START_HOUR = 6;
+    const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
     const DISPLAY_ROUTINE_ORDER = ["morning", "outing", "lunch", "dinner", "night"];
     const LONG_PRESS_MS = 560;
     const NIGHT_DAYLOG_NOTE = [
@@ -2113,8 +2374,8 @@
         id: "night",
         icon: "↓",
         name: "밤 종료",
-        color: "#8B4EA0",
-        soft: "#EFE1F3",
+        color: "#934B8F",
+        soft: "#F2E0EC",
         doneText: "오늘은 닫았다. 폰 없이 침대에 들어가자.",
         steps: [
           { id: "n1", icon: "📒", title: "DayLog 열기", note: NIGHT_DAYLOG_NOTE, minutes: 12 },
@@ -2134,6 +2395,13 @@
 
     const els = {
       app: document.getElementById("app"),
+      auth: document.getElementById("authScreen"),
+      authForm: document.getElementById("authForm"),
+      authEmail: document.getElementById("authEmail"),
+      authPassword: document.getElementById("authPassword"),
+      authLoginBtn: document.getElementById("authLoginBtn"),
+      authSignupBtn: document.getElementById("authSignupBtn"),
+      authMessage: document.getElementById("authMessage"),
       home: document.getElementById("homeScreen"),
       run: document.getElementById("runScreen"),
       done: document.getElementById("doneScreen"),
@@ -2141,6 +2409,14 @@
       todayLabel: document.getElementById("todayLabel"),
       dayPlanNotice: document.getElementById("dayPlanNotice"),
       routineList: document.getElementById("routineList"),
+      heroArea: document.getElementById("heroArea"),
+      brandTitle: document.getElementById("brandTitle"),
+      backupPanel: document.getElementById("backupPanel"),
+      backupInput: document.getElementById("backupInput"),
+      backupClearBtn: document.getElementById("backupClearBtn"),
+      backupImportBtn: document.getElementById("backupImportBtn"),
+      backupExportBtn: document.getElementById("backupExportBtn"),
+      backupLogoutBtn: document.getElementById("backupLogoutBtn"),
       calendarOverlay: document.getElementById("calendarOverlay"),
       calendarTitle: document.getElementById("calendarTitle"),
       calendarGrid: document.getElementById("calendarGrid"),
@@ -2182,42 +2458,22 @@
       resetRoutineBtn: document.getElementById("resetRoutineBtn")
     };
 
-    let state = loadState();
-    let tickId = null;
-    let activeRoutineId = null;
-    let editRoutineId = state.routines[0]?.id || "morning";
-    let editStepId = null;
-    let previousScreen = "home";
-    let suppressStepMemoInput = false;
-    let wakeLock = null;
-    let wakeLockWanted = false;
-    let lastPreviewKey = "";
-    let shouldCenterPreview = false;
-    let selectedDateKey = todayKey();
-    let isDatePlanMode = false;
-
     function clone(value) {
       return JSON.parse(JSON.stringify(value));
     }
 
     function routineDayDate() {
       const d = new Date();
-      if (d.getHours() < 7) d.setDate(d.getDate() - 1);
+      if (d.getHours() < DAY_START_HOUR) d.setDate(d.getDate() - 1);
       return d;
     }
 
     function todayKey() {
-      const d = routineDayDate();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
+      return dateKeyFromDate(routineDayDate());
     }
 
     function todayKo() {
-      const d = routineDayDate();
-      const days = ["일", "월", "화", "수", "목", "금", "토"];
-      return `${d.getMonth() + 1}.${d.getDate()} ${days[d.getDay()]}`;
+      return dateLabelKo(routineDayDate(), false);
     }
 
 
@@ -2260,6 +2516,12 @@
       return `${y}-${m}-${day}`;
     }
 
+    function dateLabelKo(date, withParentheses = false) {
+      const weekday = WEEKDAY_LABELS[date.getDay()];
+      const dayText = withParentheses ? `(${weekday})` : weekday;
+      return `${date.getMonth() + 1}.${date.getDate()} ${dayText}`;
+    }
+
 
 
     function normalizeDayPlans(source) {
@@ -2293,15 +2555,11 @@
     }
 
     function dateKeyKo(key) {
-      const d = dateFromKey(key);
-      const days = ["일", "월", "화", "수", "목", "금", "토"];
-      return `${d.getMonth() + 1}.${d.getDate()} ${days[d.getDay()]}`;
+      return dateLabelKo(dateFromKey(key), false);
     }
 
     function dateKeyPlanLabel(key) {
-      const d = dateFromKey(key);
-      const days = ["일", "월", "화", "수", "목", "금", "토"];
-      return `${d.getMonth() + 1}.${d.getDate()} (${days[d.getDay()]}) 루틴 수정하기`;
+      return `${dateLabelKo(dateFromKey(key), true)} 루틴 수정하기`;
     }
 
     function isPastOrTodayKey(key) {
@@ -2428,6 +2686,76 @@
 
     function defaultById(id) {
       return DEFAULT_ROUTINES.find((routine) => routine.id === id) || DEFAULT_ROUTINES[0];
+    }
+
+    function isPlainObject(value) {
+      return Boolean(value && typeof value === "object" && !Array.isArray(value));
+    }
+
+    function safeObject(value, fallback = {}) {
+      return isPlainObject(value) ? value : fallback;
+    }
+
+    function readStoredState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return isPlainObject(parsed) ? parsed : null;
+    }
+
+    function readLocalUpdatedAt() {
+      const value = Number(localStorage.getItem(LOCAL_UPDATED_AT_KEY));
+      return Number.isFinite(value) && value > 0 ? value : 0;
+    }
+
+    function writeLocalUpdatedAt(value) {
+      localStorage.setItem(LOCAL_UPDATED_AT_KEY, String(value));
+    }
+
+    function ensureLocalUpdatedAt() {
+      let value = readLocalUpdatedAt();
+      if (!value) {
+        value = Date.now();
+        writeLocalUpdatedAt(value);
+      }
+      return value;
+    }
+
+    function writeStoredState(targetState, options = {}) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(targetState));
+      if (options.touch !== false) writeLocalUpdatedAt(Date.now());
+      if (options.cloud !== false) enqueueCloudSave();
+    }
+
+    function backupStatePayload() {
+      return {
+        tag: BACKUP_TAG,
+        app: "routiner",
+        schema: BACKUP_SCHEMA,
+        storageKey: STORAGE_KEY,
+        appVersion: APP_VERSION,
+        dayStartHour: DAY_START_HOUR,
+        exportedAt: new Date().toISOString(),
+        state: prepareStateForSave(clone(state))
+      };
+    }
+
+    function parseBackupText(text) {
+      const raw = String(text || "").trim();
+      if (!raw) return null;
+      try {
+        const payload = JSON.parse(raw);
+        if (!isPlainObject(payload)) return null;
+        if (payload.tag !== BACKUP_TAG) return null;
+        if (payload.app !== "routiner") return null;
+        if (payload.schema !== BACKUP_SCHEMA) return null;
+        if (payload.storageKey !== STORAGE_KEY) return null;
+        if (!isPlainObject(payload.state)) return null;
+        const nextState = normalizeLoadedState(payload.state);
+        return { payload, nextState };
+      } catch {
+        return null;
+      }
     }
 
     function normalizeStep(step, index, fallback) {
@@ -2584,47 +2912,66 @@
       });
     }
 
+    function findExistingRoutineForFixed(oldRoutines, fixed) {
+      const direct = oldRoutines.find((routine) => routine.id === fixed.id);
+      if (direct) return direct;
+      const oldReturn = oldRoutines.find((routine) => routine.id === "return");
+      return (fixed.id === "lunch" || fixed.id === "dinner") ? oldReturn : null;
+    }
+
+    function normalizeRoutinesForState(parsed, resetToDefault) {
+      const oldRoutines = Array.isArray(parsed?.routines) ? parsed.routines : [];
+      const routines = DEFAULT_ROUTINES.map((fixed) => {
+        return normalizeRoutineFromFixed(findExistingRoutineForFixed(oldRoutines, fixed), fixed, resetToDefault);
+      });
+      applyCopyMigrations(routines);
+      return routines;
+    }
+
+    function snapshotPreviousRoutineDay(parsed, calendar) {
+      if (!parsed?.today || parsed.today === todayKey()) return;
+      calendar[parsed.today] = snapshotFromParts(parsed.completed, parsed.offToday, parsed.sessions);
+    }
+
+    function rolloverToTodayIfNeeded(targetState) {
+      if (targetState.today === todayKey()) return;
+      targetState.today = todayKey();
+      targetState.completed = {};
+      targetState.sessions = {};
+      targetState.offToday = defaultOffToday();
+    }
+
+    function normalizeLoadedState(parsed) {
+      const base = defaultState();
+      if (!parsed) return base;
+
+      const shouldResetDefaultRoutines = parsed.routineSchema !== ROUTINE_SCHEMA_VERSION;
+      const calendar = { ...safeObject(parsed.calendar) };
+      const dayPlans = normalizeDayPlans(safeObject(parsed.dayPlans));
+      const routines = normalizeRoutinesForState(parsed, shouldResetDefaultRoutines);
+      snapshotPreviousRoutineDay(parsed, calendar);
+
+      const next = {
+        ...base,
+        ...parsed,
+        version: APP_VERSION,
+        routineSchema: ROUTINE_SCHEMA_VERSION,
+        routines,
+        sessions: shouldResetDefaultRoutines ? {} : safeObject(parsed.sessions),
+        completed: shouldResetDefaultRoutines ? {} : safeObject(parsed.completed),
+        offToday: shouldResetDefaultRoutines ? defaultOffToday() : safeObject(parsed.offToday, defaultOffToday()),
+        calendar,
+        dayPlans
+      };
+      rolloverToTodayIfNeeded(next);
+      updateTodayCalendar(next);
+      normalizeAllSessions(next);
+      return next;
+    }
+
     function loadState() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        const parsed = raw ? JSON.parse(raw) : defaultState();
-        const base = defaultState();
-        if (!parsed || typeof parsed !== "object") return base;
-
-        const shouldResetDefaultRoutines = parsed.routineSchema !== ROUTINE_SCHEMA_VERSION;
-        const calendar = parsed.calendar && typeof parsed.calendar === "object" ? { ...parsed.calendar } : {};
-        const dayPlans = parsed.dayPlans && typeof parsed.dayPlans === "object" ? normalizeDayPlans(parsed.dayPlans) : {};
-        const oldRoutines = Array.isArray(parsed.routines) ? parsed.routines : [];
-        const oldReturn = oldRoutines.find((routine) => routine.id === "return");
-        const fixedRoutines = DEFAULT_ROUTINES.map((fixed) => {
-          const existing = oldRoutines.find((routine) => routine.id === fixed.id) || ((fixed.id === "lunch" || fixed.id === "dinner") ? oldReturn : null);
-          return normalizeRoutineFromFixed(existing, fixed, shouldResetDefaultRoutines);
-        });
-        applyCopyMigrations(fixedRoutines);
-        if (parsed.today && parsed.today !== todayKey()) {
-          calendar[parsed.today] = snapshotFromParts(parsed.completed, parsed.offToday, parsed.sessions);
-        }
-        const next = {
-          ...base,
-          ...parsed,
-          version: APP_VERSION,
-          routineSchema: ROUTINE_SCHEMA_VERSION,
-          routines: fixedRoutines,
-          sessions: shouldResetDefaultRoutines ? {} : (parsed.sessions && typeof parsed.sessions === "object" ? parsed.sessions : {}),
-          completed: shouldResetDefaultRoutines ? {} : (parsed.completed && typeof parsed.completed === "object" ? parsed.completed : {}),
-          offToday: shouldResetDefaultRoutines ? defaultOffToday() : (parsed.offToday && typeof parsed.offToday === "object" ? parsed.offToday : defaultOffToday()),
-          calendar,
-          dayPlans
-        };
-        if (next.today !== todayKey()) {
-          next.today = todayKey();
-          next.completed = {};
-          next.sessions = {};
-          next.offToday = defaultOffToday();
-        }
-        updateTodayCalendar(next);
-        normalizeAllSessions(next);
-        return next;
+        return normalizeLoadedState(readStoredState());
       } catch {
         return defaultState();
       }
@@ -2648,12 +2995,255 @@
       });
     }
 
-    function saveState() {
-      state.version = APP_VERSION;
-      state.routineSchema = ROUTINE_SCHEMA_VERSION;
-      if (!state.dayPlans || typeof state.dayPlans !== "object") state.dayPlans = {};
-      updateTodayCalendar(state);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    function prepareStateForSave(targetState) {
+      targetState.version = APP_VERSION;
+      targetState.routineSchema = ROUTINE_SCHEMA_VERSION;
+      if (!isPlainObject(targetState.dayPlans)) targetState.dayPlans = {};
+      updateTodayCalendar(targetState);
+      return targetState;
+    }
+
+    function saveState(options = {}) {
+      writeStoredState(prepareStateForSave(state), options);
+    }
+
+    const cloudSync = {
+      ready: false,
+      loading: false,
+      user: null,
+      app: null,
+      auth: null,
+      db: null,
+      api: null,
+      pendingSave: false,
+      saveTimer: null,
+      applyingRemote: false
+    };
+
+    function firestoreStatePayload(targetState = state) {
+      return {
+        tag: FIRESTORE_TAG,
+        app: "routiner",
+        schema: FIRESTORE_SCHEMA,
+        storageKey: STORAGE_KEY,
+        appVersion: APP_VERSION,
+        dayStartHour: DAY_START_HOUR,
+        updatedAt: ensureLocalUpdatedAt(),
+        serverUpdatedAt: cloudSync.api?.serverTimestamp ? cloudSync.api.serverTimestamp() : null,
+        state: prepareStateForSave(clone(targetState))
+      };
+    }
+
+    function parseFirestoreStatePayload(payload) {
+      if (!isPlainObject(payload)) return null;
+      if (payload.tag !== FIRESTORE_TAG) return null;
+      if (payload.app !== "routiner") return null;
+      if (payload.schema !== FIRESTORE_SCHEMA) return null;
+      if (payload.storageKey !== STORAGE_KEY) return null;
+      if (!isPlainObject(payload.state)) return null;
+      const updatedAt = Number(payload.updatedAt) || 0;
+      return { nextState: normalizeLoadedState(payload.state), updatedAt };
+    }
+
+    function cloudDocRef() {
+      if (!cloudSync.user || !cloudSync.db || !cloudSync.api?.doc) return null;
+      return cloudSync.api.doc(cloudSync.db, "users", cloudSync.user.uid, "routiner", FIRESTORE_DOC_ID);
+    }
+
+    function updateCloudButton() {
+      if (!els?.backupLogoutBtn) return;
+      if (cloudSync.loading) {
+        els.backupLogoutBtn.disabled = true;
+        els.backupLogoutBtn.textContent = "연결중";
+        return;
+      }
+      els.backupLogoutBtn.textContent = "로그아웃";
+      els.backupLogoutBtn.disabled = !cloudSync.ready || !cloudSync.user;
+    }
+
+    function setAuthBusy(busy, label = "확인 중") {
+      [els.authEmail, els.authPassword, els.authLoginBtn, els.authSignupBtn].forEach((el) => {
+        if (el) el.disabled = Boolean(busy);
+      });
+      if (busy) showAuthMessage(label, "info");
+    }
+
+    function showAuthMessage(message, tone = "info") {
+      if (!els?.authMessage) return;
+      els.authMessage.textContent = message || "";
+      els.authMessage.classList.toggle("error", tone === "error");
+    }
+
+    function authCredentials() {
+      const email = (els.authEmail?.value || "").trim();
+      const password = els.authPassword?.value || "";
+      return { email, password };
+    }
+
+    function formatAuthError(error, mode) {
+      const code = String(error?.code || "");
+      if (code.includes("invalid-email")) return "이메일 형식이 이상해.";
+      if (code.includes("missing-password")) return "비밀번호를 입력해.";
+      if (code.includes("weak-password")) return "비밀번호는 6자 이상으로 해.";
+      if (code.includes("email-already-in-use")) return "이미 만든 계정이야. 로그인으로 들어가.";
+      if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) return "이메일이나 비밀번호가 맞지 않아.";
+      if (code.includes("operation-not-allowed")) return "Firebase에서 Email/Password를 먼저 켜야 해.";
+      return mode === "signup" ? "계정 만들기 실패" : "로그인 실패";
+    }
+
+    function showSignedOutScreen() {
+      updateCloudButton();
+      showAuthMessage("이메일/비밀번호를 입력해.", "info");
+      showScreen("auth");
+    }
+
+    function showSignedInScreen() {
+      updateCloudButton();
+      renderHome();
+      showScreen("home");
+    }
+
+    function enqueueCloudSave() {
+      if (cloudSync.applyingRemote) return;
+      if (!cloudSync.ready || !cloudSync.user || !cloudSync.db) return;
+      cloudSync.pendingSave = true;
+      if (cloudSync.saveTimer) window.clearTimeout(cloudSync.saveTimer);
+      cloudSync.saveTimer = window.setTimeout(flushCloudSave, 700);
+    }
+
+    async function flushCloudSave() {
+      if (!cloudSync.pendingSave || !cloudSync.ready || !cloudSync.user) return;
+      cloudSync.pendingSave = false;
+      try {
+        const ref = cloudDocRef();
+        if (!ref) return;
+        await cloudSync.api.setDoc(ref, firestoreStatePayload(state));
+      } catch (error) {
+        console.warn("Routiner Firestore save failed", error);
+      }
+    }
+
+    function applyRemoteState(nextState, updatedAt) {
+      cloudSync.applyingRemote = true;
+      state = nextState;
+      writeLocalUpdatedAt(updatedAt || Date.now());
+      saveState({ touch: false, cloud: false });
+      activeRoutineId = null;
+      selectedDateKey = todayKey();
+      isDatePlanMode = false;
+      editRoutineId = state.routines[0]?.id || "morning";
+      editStepId = null;
+      previousScreen = "home";
+      cloudSync.applyingRemote = false;
+      renderHome();
+    }
+
+    async function syncCloudAfterSignIn() {
+      if (!cloudSync.ready || !cloudSync.user) return;
+      try {
+        const ref = cloudDocRef();
+        if (!ref) return;
+        const snap = await cloudSync.api.getDoc(ref);
+        if (!snap.exists()) {
+          await cloudSync.api.setDoc(ref, firestoreStatePayload(state));
+          return;
+        }
+        const parsed = parseFirestoreStatePayload(snap.data());
+        if (!parsed) {
+          await cloudSync.api.setDoc(ref, firestoreStatePayload(state));
+          return;
+        }
+        const localUpdatedAt = readLocalUpdatedAt();
+        if (!hadStoredStateAtBoot || parsed.updatedAt > localUpdatedAt) {
+          applyRemoteState(parsed.nextState, parsed.updatedAt);
+        } else {
+          await cloudSync.api.setDoc(ref, firestoreStatePayload(state));
+        }
+      } catch (error) {
+        console.warn("Routiner Firestore sync failed", error);
+        showToast("클라우드 확인 실패");
+      }
+    }
+
+    async function initFirebase() {
+      cloudSync.loading = true;
+      updateCloudButton();
+      showAuthMessage("연결 준비 중", "info");
+      try {
+        const baseUrl = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
+        const [appMod, authMod, firestoreMod] = await Promise.all([
+          import(`${baseUrl}/firebase-app.js`),
+          import(`${baseUrl}/firebase-auth.js`),
+          import(`${baseUrl}/firebase-firestore.js`)
+        ]);
+        cloudSync.app = appMod.initializeApp(FIREBASE_CONFIG);
+        cloudSync.auth = authMod.getAuth(cloudSync.app);
+        cloudSync.db = firestoreMod.getFirestore(cloudSync.app);
+        cloudSync.api = {
+          createUserWithEmailAndPassword: authMod.createUserWithEmailAndPassword,
+          signInWithEmailAndPassword: authMod.signInWithEmailAndPassword,
+          signOut: authMod.signOut,
+          onAuthStateChanged: authMod.onAuthStateChanged,
+          doc: firestoreMod.doc,
+          getDoc: firestoreMod.getDoc,
+          setDoc: firestoreMod.setDoc,
+          serverTimestamp: firestoreMod.serverTimestamp
+        };
+        cloudSync.ready = true;
+        cloudSync.api.onAuthStateChanged(cloudSync.auth, async (user) => {
+          cloudSync.user = user || null;
+          cloudSync.loading = false;
+          updateCloudButton();
+          if (user) {
+            showAuthMessage("불러오는 중", "info");
+            await syncCloudAfterSignIn();
+            showSignedInScreen();
+          } else {
+            showSignedOutScreen();
+          }
+        });
+      } catch (error) {
+        console.warn("Routiner Firebase init failed", error);
+        cloudSync.ready = false;
+        cloudSync.loading = false;
+        updateCloudButton();
+        showAuthMessage("Firebase 연결 실패", "error");
+        showScreen("auth");
+      }
+    }
+
+    async function handleEmailAuth(mode) {
+      if (!cloudSync.ready || !cloudSync.auth) {
+        showAuthMessage("Firebase 준비 안 됨", "error");
+        return;
+      }
+      const { email, password } = authCredentials();
+      if (!email || !password) {
+        showAuthMessage("이메일과 비밀번호를 입력해.", "error");
+        return;
+      }
+      setAuthBusy(true, mode === "signup" ? "처음 연결 중" : "로그인 중");
+      try {
+        if (mode === "signup") {
+          await cloudSync.api.createUserWithEmailAndPassword(cloudSync.auth, email, password);
+        } else {
+          await cloudSync.api.signInWithEmailAndPassword(cloudSync.auth, email, password);
+        }
+      } catch (error) {
+        showAuthMessage(formatAuthError(error, mode), "error");
+      } finally {
+        setAuthBusy(false);
+      }
+    }
+
+    async function handleCloudLogoutButton() {
+      if (!cloudSync.ready || !cloudSync.auth || !cloudSync.user) return;
+      try {
+        await cloudSync.api.signOut(cloudSync.auth);
+        showToast("로그아웃됨");
+      } catch {
+        showToast("로그아웃 실패");
+      }
     }
 
     function getRoutine(routineId) {
@@ -2798,6 +3388,7 @@
       els.app.classList.toggle("edit-mode", name === "edit");
       els.app.classList.toggle("plan-mode", planMode);
       document.body.classList.toggle("plan-mode", planMode);
+      els.auth.classList.toggle("active", name === "auth");
       els.home.classList.toggle("active", name === "home");
       els.run.classList.toggle("active", name === "run");
       els.done.classList.toggle("active", name === "done");
@@ -3726,7 +4317,7 @@
       };
       resize();
 
-      const palette = [accent, soft, "#ffffff", "#FFE08A", "#FF9F7A", "#8B4EA0"];
+      const palette = [accent, soft, "#ffffff", "#FFE08A", "#FF9F7A", "#934B8F"];
       const particleCount = variant === "confetti" ? 108 : variant === "firework" ? 96 : variant === "sparkle" ? 92 : 82;
       const duration = variant === "confetti" ? 1750 : variant === "firework" ? 1650 : variant === "sparkle" ? 1550 : 1500;
       const particles = Array.from({ length: particleCount }, (_, i) => makeCelebrationParticle(variant, i, particleCount, window.innerWidth, window.innerHeight, palette));
@@ -3768,6 +4359,78 @@
 
     let lastResetButtonInvokeAt = 0;
 
+    const hadStoredStateAtBoot = Boolean(localStorage.getItem(STORAGE_KEY));
+    let state = loadState();
+    if (hadStoredStateAtBoot) ensureLocalUpdatedAt();
+    let tickId = null;
+    let activeRoutineId = null;
+    let editRoutineId = state.routines[0]?.id || "morning";
+    let editStepId = null;
+    let previousScreen = "home";
+    let suppressStepMemoInput = false;
+    let wakeLock = null;
+    let wakeLockWanted = false;
+    let lastPreviewKey = "";
+    let shouldCenterPreview = false;
+    let selectedDateKey = todayKey();
+    let isDatePlanMode = false;
+    let backupPanelOpen = false;
+    let brandLongPressTimer = null;
+    let brandLongPressed = false;
+
+    function setBackupPanelOpen(open) {
+      backupPanelOpen = Boolean(open);
+      els.backupPanel.classList.toggle("active", backupPanelOpen);
+      els.backupPanel.setAttribute("aria-hidden", backupPanelOpen ? "false" : "true");
+      if (!backupPanelOpen) els.brandTitle.classList.remove("long-pressing");
+    }
+
+    function updateBackupImportButton() {
+      const valid = Boolean(parseBackupText(els.backupInput.value));
+      els.backupInput.classList.toggle("valid", valid);
+      els.backupImportBtn.disabled = !valid;
+    }
+
+    function clearBackupInput() {
+      els.backupInput.value = "";
+      updateBackupImportButton();
+    }
+
+    function clearBrandLongPress() {
+      if (brandLongPressTimer) window.clearTimeout(brandLongPressTimer);
+      brandLongPressTimer = null;
+      els.brandTitle.classList.remove("long-pressing");
+    }
+
+    async function exportBackupToClipboard() {
+      const text = JSON.stringify(backupStatePayload());
+      try {
+        if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+        await navigator.clipboard.writeText(text);
+        showToast("백업 복사됨");
+      } catch {
+        els.backupInput.value = text;
+        updateBackupImportButton();
+        setBackupPanelOpen(true);
+        showToast("직접 복사");
+      }
+    }
+
+    function importBackupFromInput() {
+      const parsed = parseBackupText(els.backupInput.value);
+      if (!parsed) return;
+      state = parsed.nextState;
+      selectedDateKey = todayKey();
+      isDatePlanMode = false;
+      activeRoutineId = null;
+      editRoutineId = state.routines[0]?.id || "morning";
+      saveState();
+      clearBackupInput();
+      setBackupPanelOpen(false);
+      renderHome();
+      showToast("백업 가져옴");
+    }
+
     function handleResetRoutineButton(event) {
       if (!event.currentTarget || event.currentTarget !== els.resetRoutineBtn) return;
       event.preventDefault();
@@ -3777,6 +4440,47 @@
       lastResetButtonInvokeAt = now;
       requestResetCurrentRoutineToDefault();
     }
+
+    els.brandTitle.addEventListener("pointerdown", () => {
+      brandLongPressed = false;
+      clearBrandLongPress();
+      els.brandTitle.classList.add("long-pressing");
+      brandLongPressTimer = window.setTimeout(() => {
+        brandLongPressed = true;
+        clearBrandLongPress();
+        setBackupPanelOpen(true);
+      }, LONG_PRESS_MS);
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+      els.brandTitle.addEventListener(eventName, clearBrandLongPress);
+    });
+    els.brandTitle.addEventListener("contextmenu", (event) => event.preventDefault());
+    els.brandTitle.addEventListener("click", (event) => {
+      if (brandLongPressed) {
+        event.preventDefault();
+        brandLongPressed = false;
+      }
+    });
+    els.brandTitle.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      setBackupPanelOpen(!backupPanelOpen);
+    });
+    els.authForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      handleEmailAuth("login");
+    });
+    els.authSignupBtn.addEventListener("click", () => handleEmailAuth("signup"));
+    els.backupInput.addEventListener("input", updateBackupImportButton);
+    els.backupClearBtn.addEventListener("click", clearBackupInput);
+    els.backupImportBtn.addEventListener("click", importBackupFromInput);
+    els.backupExportBtn.addEventListener("click", exportBackupToClipboard);
+    els.backupLogoutBtn.addEventListener("click", handleCloudLogoutButton);
+    document.addEventListener("pointerdown", (event) => {
+      if (!backupPanelOpen) return;
+      if (els.heroArea.contains(event.target)) return;
+      setBackupPanelOpen(false);
+    });
 
     els.todayLabel.addEventListener("click", openCalendar);
     els.calendarCloseBtn.addEventListener("click", closeCalendar);
@@ -3982,10 +4686,12 @@
     });
 
     function initFromUrl() {
+      updateCloudButton();
+      initFirebase();
       selectedDateKey = todayKey();
       isDatePlanMode = false;
       els.todayLabel.textContent = dateKeyKo(selectedDateKey);
-      saveState();
+      saveState({ touch: false });
       // v1.12: 홈 화면 웹앱 저장소 분리를 피하기 위해 query 진입을 사용하지 않는다.
       // 과거 ?routine=outing, ?edit=1 같은 링크로 열려도 즉시 기본 주소로 정리하고,
       // 앱 내부에서만 루틴 선택/수정을 진행한다.
