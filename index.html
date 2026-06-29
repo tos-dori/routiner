@@ -350,7 +350,7 @@
 
     .auth-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 8px;
       margin-top: 2px;
     }
@@ -2122,7 +2122,6 @@
           <input class="auth-input" id="authPassword" type="password" placeholder="비밀번호" autocomplete="current-password" required>
           <div class="auth-actions">
             <button class="auth-action primary" id="authLoginBtn" type="submit">로그인</button>
-            <button class="auth-action" id="authSignupBtn" type="button">처음 연결</button>
           </div>
           <div class="auth-message" id="authMessage" aria-live="polite">이메일/비밀번호를 입력해.</div>
         </form>
@@ -2251,18 +2250,19 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.44";
+    const APP_VERSION = "1.47";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
     const BACKUP_TAG = "ROUTINER_BACKUP_V1";
     const BACKUP_SCHEMA = 1;
     const FIRESTORE_TAG = "ROUTINER_FIRESTORE_STATE_V1";
-    const FIRESTORE_SCHEMA = 1;
+    const FIRESTORE_SCHEMA = 3;
     const FIRESTORE_DOC_ID = "main";
     const FIREBASE_SDK_VERSION = "12.15.0";
     const FIREBASE_CONFIG = {
       // Firebase Web API key는 브라우저 앱에서 쓰이는 client config 값이다.
-      // GitHub secret scanning의 Google API Key 패턴 경고를 피하려고 연속된 키 문자열로 커밋하지 않는다.
+      // 실제 접근 통제는 Auth, Firestore Rules, Google Cloud API key restriction에서 처리한다.
+      // public repo의 불필요한 secret scanning 잡음을 줄이기 위해 연속된 키 문자열로 커밋하지 않는다.
       apiKey: ["AI", "za", "Sy", "B-QEUJGVNhP2MaiTdVrcxVrUgYy-6-usc"].join(""),
       authDomain: "routiner-personal.firebaseapp.com",
       projectId: "routiner-personal",
@@ -2271,6 +2271,7 @@
       appId: "1:864215206596:web:89ea47bab1456e5f16d791"
     };
     const LOCAL_UPDATED_AT_KEY = `${STORAGE_KEY}__updatedAt`;
+    const CLOUD_DEVICE_KEY = `${STORAGE_KEY}__cloudDeviceId`;
     const DAY_START_HOUR = 6;
     const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
     const DISPLAY_ROUTINE_ORDER = ["morning", "outing", "lunch", "dinner", "night"];
@@ -2402,7 +2403,6 @@
       authEmail: document.getElementById("authEmail"),
       authPassword: document.getElementById("authPassword"),
       authLoginBtn: document.getElementById("authLoginBtn"),
-      authSignupBtn: document.getElementById("authSignupBtn"),
       authMessage: document.getElementById("authMessage"),
       home: document.getElementById("homeScreen"),
       run: document.getElementById("runScreen"),
@@ -2725,8 +2725,13 @@
 
     function writeStoredState(targetState, options = {}) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(targetState));
-      if (options.touch !== false) writeLocalUpdatedAt(Date.now());
-      if (options.cloud !== false) enqueueCloudSave();
+      const nextCloudHash = cloudStateHash(targetState);
+      const cloudChanged = options.cloud !== false && nextCloudHash !== lastLocalCloudHash;
+      if (options.touch !== false && cloudChanged) writeLocalUpdatedAt(Date.now());
+      if (cloudChanged) {
+        lastLocalCloudHash = nextCloudHash;
+        enqueueCloudSave(nextCloudHash);
+      }
     }
 
     function backupStatePayload() {
@@ -3009,6 +3014,37 @@
       writeStoredState(prepareStateForSave(state), options);
     }
 
+    function getCloudDeviceId() {
+      try {
+        let id = localStorage.getItem(CLOUD_DEVICE_KEY);
+        if (!id) {
+          id = crypto?.randomUUID ? crypto.randomUUID() : `routiner-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+          localStorage.setItem(CLOUD_DEVICE_KEY, id);
+        }
+        return id;
+      } catch {
+        return `routiner-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+    }
+
+    function cloudStateSlice(targetState = state) {
+      const prepared = prepareStateForSave(clone(targetState));
+      return {
+        version: APP_VERSION,
+        routineSchema: ROUTINE_SCHEMA_VERSION,
+        today: prepared.today,
+        routines: clone(prepared.routines),
+        completed: clone(safeObject(prepared.completed)),
+        offToday: clone(safeObject(prepared.offToday, defaultOffToday())),
+        calendar: clone(safeObject(prepared.calendar)),
+        dayPlans: clone(normalizeDayPlans(safeObject(prepared.dayPlans)))
+      };
+    }
+
+    function cloudStateHash(targetState = state) {
+      return JSON.stringify(cloudStateSlice(targetState));
+    }
+
     const cloudSync = {
       ready: false,
       loading: false,
@@ -3017,12 +3053,20 @@
       auth: null,
       db: null,
       api: null,
+      deviceId: getCloudDeviceId(),
       pendingSave: false,
+      pendingHash: "",
       saveTimer: null,
-      applyingRemote: false
+      applyingRemote: false,
+      unsubscribeSnapshot: null,
+      pendingRemote: null,
+      lastSavedHash: "",
+      activeRun: null,
+      activeRunUpdatedAt: 0
     };
 
     function firestoreStatePayload(targetState = state) {
+      const slice = cloudStateSlice(targetState);
       return {
         tag: FIRESTORE_TAG,
         app: "routiner",
@@ -3032,7 +3076,11 @@
         dayStartHour: DAY_START_HOUR,
         updatedAt: ensureLocalUpdatedAt(),
         serverUpdatedAt: cloudSync.api?.serverTimestamp ? cloudSync.api.serverTimestamp() : null,
-        state: prepareStateForSave(clone(targetState))
+        updatedBy: cloudSync.deviceId,
+        activeRun: clone(cloudSync.activeRun || null),
+        activeRunUpdatedAt: Number(cloudSync.activeRunUpdatedAt || 0),
+        state: slice,
+        stateHash: JSON.stringify(slice)
       };
     }
 
@@ -3040,11 +3088,116 @@
       if (!isPlainObject(payload)) return null;
       if (payload.tag !== FIRESTORE_TAG) return null;
       if (payload.app !== "routiner") return null;
-      if (payload.schema !== FIRESTORE_SCHEMA) return null;
+      const schema = Number(payload.schema) || 0;
+      if (![1, 2, FIRESTORE_SCHEMA].includes(schema)) return null;
       if (payload.storageKey !== STORAGE_KEY) return null;
       if (!isPlainObject(payload.state)) return null;
       const updatedAt = Number(payload.updatedAt) || 0;
-      return { nextState: normalizeLoadedState(payload.state), updatedAt };
+      const activeRun = normalizeActiveRun(payload.activeRun);
+      const activeRunUpdatedAt = Number(payload.activeRunUpdatedAt) || Number(activeRun?.updatedAt) || 0;
+      return { nextState: normalizeLoadedState(payload.state), updatedAt, updatedBy: String(payload.updatedBy || ""), schema, activeRun, activeRunUpdatedAt };
+    }
+
+    function normalizeActiveRun(value) {
+      if (!isPlainObject(value)) return null;
+      const routineId = String(value.routineId || "");
+      if (!routineId) return null;
+      return {
+        routineId,
+        routineName: String(value.routineName || ""),
+        deviceId: String(value.deviceId || ""),
+        updatedAt: Number(value.updatedAt) || Date.now()
+      };
+    }
+
+    function activeRunLabel(activeRun) {
+      if (!activeRun) return "다른 루틴";
+      return String(activeRun.routineName || getRoutine(activeRun.routineId)?.name || "다른 루틴");
+    }
+
+    function activeRunConflictFor(routineId) {
+      const activeRun = cloudSync.activeRun;
+      if (!activeRun) return null;
+      if (activeRun.deviceId === cloudSync.deviceId && activeRun.routineId === routineId) return null;
+      return activeRun;
+    }
+
+    function stopLocalRunningSessionsExcept(routineId) {
+      if (!state.sessions || typeof state.sessions !== "object") return false;
+      let stopped = false;
+      Object.entries(state.sessions).forEach(([id, session]) => {
+        if (!session || id === routineId || !session.running) return;
+        session.running = false;
+        session.lastTick = Date.now();
+        stopped = true;
+      });
+      return stopped;
+    }
+
+    function stopAllLocalRunningSessions() {
+      if (!state.sessions || typeof state.sessions !== "object") return false;
+      let stopped = false;
+      Object.values(state.sessions).forEach((session) => {
+        if (!session || !session.running) return;
+        session.running = false;
+        session.lastTick = Date.now();
+        stopped = true;
+      });
+      return stopped;
+    }
+
+    function applyRemoteActiveRun(activeRun, updatedAt = 0) {
+      const normalized = normalizeActiveRun(activeRun);
+      const nextUpdatedAt = Number(updatedAt) || Number(normalized?.updatedAt) || 0;
+      if (nextUpdatedAt && nextUpdatedAt < Number(cloudSync.activeRunUpdatedAt || 0)) return;
+      cloudSync.activeRun = normalized;
+      cloudSync.activeRunUpdatedAt = nextUpdatedAt || Date.now();
+      if (!normalized || normalized.deviceId === cloudSync.deviceId) return;
+      const stopped = stopAllLocalRunningSessions();
+      if (!stopped) return;
+      saveState({ touch: false, cloud: false });
+      if (els.run.classList.contains("active") && activeRoutineId) renderRun();
+      showToast(`${activeRunLabel(normalized)} 시작됨`);
+    }
+
+    async function writeCloudActiveRun(activeRun) {
+      cloudSync.activeRun = normalizeActiveRun(activeRun);
+      cloudSync.activeRunUpdatedAt = Date.now();
+      if (!cloudSync.ready || !cloudSync.user || !cloudSync.db || !cloudSync.api?.setDoc) return;
+      try {
+        const ref = cloudDocRef();
+        if (!ref) return;
+        await cloudSync.api.setDoc(ref, {
+          activeRun: clone(cloudSync.activeRun || null),
+          activeRunUpdatedAt: cloudSync.activeRunUpdatedAt
+        }, { merge: true });
+      } catch (error) {
+        console.warn("Routiner active run lock failed", error);
+      }
+    }
+
+    function claimActiveRunForRoutine(routine) {
+      const conflict = activeRunConflictFor(routine.id);
+      if (conflict) {
+        const currentName = activeRunLabel(conflict);
+        const ok = window.confirm(`현재 ${currentName}이 실행 중입니다.
+끄고 ${routine.name}을 시작할까요?`);
+        if (!ok) return false;
+      }
+      const stopped = stopLocalRunningSessionsExcept(routine.id);
+      if (stopped) saveState({ touch: false, cloud: false });
+      writeCloudActiveRun({
+        routineId: routine.id,
+        routineName: routine.name,
+        deviceId: cloudSync.deviceId,
+        updatedAt: Date.now()
+      });
+      return true;
+    }
+
+    function clearCloudActiveRunIf(routineId) {
+      if (!cloudSync.activeRun || cloudSync.activeRun.routineId !== routineId) return;
+      writeCloudActiveRun(null);
     }
 
     function cloudDocRef() {
@@ -3064,7 +3217,7 @@
     }
 
     function setAuthBusy(busy, label = "확인 중") {
-      [els.authEmail, els.authPassword, els.authLoginBtn, els.authSignupBtn].forEach((el) => {
+      [els.authEmail, els.authPassword, els.authLoginBtn].forEach((el) => {
         if (el) el.disabled = Boolean(busy);
       });
       if (busy) showAuthMessage(label, "info");
@@ -3082,15 +3235,13 @@
       return { email, password };
     }
 
-    function formatAuthError(error, mode) {
+    function formatAuthError(error) {
       const code = String(error?.code || "");
       if (code.includes("invalid-email")) return "이메일 형식이 이상해.";
       if (code.includes("missing-password")) return "비밀번호를 입력해.";
-      if (code.includes("weak-password")) return "비밀번호는 6자 이상으로 해.";
-      if (code.includes("email-already-in-use")) return "이미 만든 계정이야. 로그인으로 들어가.";
       if (code.includes("invalid-credential") || code.includes("wrong-password") || code.includes("user-not-found")) return "이메일이나 비밀번호가 맞지 않아.";
       if (code.includes("operation-not-allowed")) return "Firebase에서 Email/Password를 먼저 켜야 해.";
-      return mode === "signup" ? "계정 만들기 실패" : "로그인 실패";
+      return "로그인 실패";
     }
 
     function showSignedOutScreen() {
@@ -3105,10 +3256,12 @@
       showScreen("home");
     }
 
-    function enqueueCloudSave() {
+    function enqueueCloudSave(nextHash = cloudStateHash(state)) {
       if (cloudSync.applyingRemote) return;
       if (!cloudSync.ready || !cloudSync.user || !cloudSync.db) return;
+      if (nextHash && nextHash === cloudSync.lastSavedHash) return;
       cloudSync.pendingSave = true;
+      cloudSync.pendingHash = nextHash || "";
       if (cloudSync.saveTimer) window.clearTimeout(cloudSync.saveTimer);
       cloudSync.saveTimer = window.setTimeout(flushCloudSave, 700);
     }
@@ -3119,25 +3272,114 @@
       try {
         const ref = cloudDocRef();
         if (!ref) return;
-        await cloudSync.api.setDoc(ref, firestoreStatePayload(state));
+        const payload = firestoreStatePayload(state);
+        await cloudSync.api.setDoc(ref, payload);
+        cloudSync.lastSavedHash = payload.stateHash || cloudSync.pendingHash || cloudStateHash(state);
       } catch (error) {
         console.warn("Routiner Firestore save failed", error);
+      } finally {
+        cloudSync.pendingHash = "";
       }
+    }
+
+    function mergeRemoteStateWithLocal(nextState) {
+      const local = clone(state);
+      const merged = {
+        ...local,
+        version: APP_VERSION,
+        routineSchema: nextState.routineSchema || ROUTINE_SCHEMA_VERSION,
+        today: nextState.today || local.today,
+        routines: Array.isArray(nextState.routines) ? clone(nextState.routines) : local.routines,
+        completed: clone(safeObject(nextState.completed)),
+        offToday: clone(safeObject(nextState.offToday, defaultOffToday())),
+        calendar: clone(safeObject(nextState.calendar)),
+        dayPlans: clone(normalizeDayPlans(safeObject(nextState.dayPlans))),
+        sessions: clone(safeObject(local.sessions))
+      };
+      return normalizeLoadedState(merged);
+    }
+
+    function renderAfterRemoteMerge() {
+      if (els.edit.classList.contains("active")) {
+        renderEditor();
+        return;
+      }
+      if (els.run.classList.contains("active")) {
+        if (activeRoutineId && getRoutine(activeRoutineId)) renderRun();
+        else renderHome();
+        return;
+      }
+      if (els.done.classList.contains("active")) {
+        if (activeRoutineId && getRoutine(activeRoutineId)) renderDoneScreen(activeRoutineId, false);
+        else renderHome();
+        return;
+      }
+      renderHome();
+      if (els.calendarOverlay.classList.contains("active")) renderCalendar();
+    }
+
+    function shouldDelayRemoteApply() {
+      const active = document.activeElement;
+      const tag = String(active?.tagName || "").toUpperCase();
+      if (tag === "INPUT" || tag === "TEXTAREA" || active?.isContentEditable) return true;
+      return els.edit.classList.contains("active");
+    }
+
+    function holdRemoteState(parsed) {
+      cloudSync.pendingRemote = parsed;
+    }
+
+    function applyPendingRemoteIfSafe() {
+      if (!cloudSync.pendingRemote || shouldDelayRemoteApply()) return;
+      const pending = cloudSync.pendingRemote;
+      cloudSync.pendingRemote = null;
+      applyRemoteState(pending.nextState, pending.updatedAt);
     }
 
     function applyRemoteState(nextState, updatedAt) {
       cloudSync.applyingRemote = true;
-      state = nextState;
+      state = mergeRemoteStateWithLocal(nextState);
+      const nextHash = cloudStateHash(state);
+      lastLocalCloudHash = nextHash;
+      cloudSync.lastSavedHash = nextHash;
       writeLocalUpdatedAt(updatedAt || Date.now());
       saveState({ touch: false, cloud: false });
-      activeRoutineId = null;
-      selectedDateKey = todayKey();
-      isDatePlanMode = false;
-      editRoutineId = state.routines[0]?.id || "morning";
-      editStepId = null;
-      previousScreen = "home";
+      if (!getRoutine(editRoutineId)) editRoutineId = state.routines[0]?.id || "morning";
+      if (editStepId && !getRoutine(editRoutineId)?.steps.some((step) => step.id === editStepId)) editStepId = null;
       cloudSync.applyingRemote = false;
-      renderHome();
+      renderAfterRemoteMerge();
+    }
+
+    function stopCloudSnapshot() {
+      if (cloudSync.unsubscribeSnapshot) {
+        cloudSync.unsubscribeSnapshot();
+        cloudSync.unsubscribeSnapshot = null;
+      }
+      cloudSync.pendingRemote = null;
+    }
+
+    function startCloudSnapshot() {
+      if (!cloudSync.ready || !cloudSync.user || !cloudSync.api?.onSnapshot) return;
+      stopCloudSnapshot();
+      const ref = cloudDocRef();
+      if (!ref) return;
+      cloudSync.unsubscribeSnapshot = cloudSync.api.onSnapshot(ref, (snap) => {
+        if (!snap.exists()) return;
+        const parsed = parseFirestoreStatePayload(snap.data());
+        if (!parsed) return;
+        applyRemoteActiveRun(parsed.activeRun, parsed.activeRunUpdatedAt);
+        const remoteHash = cloudStateHash(parsed.nextState);
+        if (parsed.updatedBy === cloudSync.deviceId || remoteHash === cloudSync.lastSavedHash) {
+          cloudSync.lastSavedHash = remoteHash;
+          return;
+        }
+        if (parsed.updatedAt && parsed.updatedAt <= readLocalUpdatedAt()) return;
+        if (shouldDelayRemoteApply()) holdRemoteState(parsed);
+        else applyRemoteState(parsed.nextState, parsed.updatedAt);
+      }, (error) => {
+        console.warn("Routiner Firestore realtime sync failed", error);
+        showToast("실시간 동기화 실패");
+      });
     }
 
     async function syncCloudAfterSignIn() {
@@ -3147,19 +3389,26 @@
         if (!ref) return;
         const snap = await cloudSync.api.getDoc(ref);
         if (!snap.exists()) {
-          await cloudSync.api.setDoc(ref, firestoreStatePayload(state));
+          const payload = firestoreStatePayload(state);
+          await cloudSync.api.setDoc(ref, payload);
+          cloudSync.lastSavedHash = payload.stateHash || cloudStateHash(state);
           return;
         }
         const parsed = parseFirestoreStatePayload(snap.data());
         if (!parsed) {
-          await cloudSync.api.setDoc(ref, firestoreStatePayload(state));
+          const payload = firestoreStatePayload(state);
+          await cloudSync.api.setDoc(ref, payload);
+          cloudSync.lastSavedHash = payload.stateHash || cloudStateHash(state);
           return;
         }
+        applyRemoteActiveRun(parsed.activeRun, parsed.activeRunUpdatedAt);
         const localUpdatedAt = readLocalUpdatedAt();
         if (!hadStoredStateAtBoot || parsed.updatedAt > localUpdatedAt) {
           applyRemoteState(parsed.nextState, parsed.updatedAt);
         } else {
-          await cloudSync.api.setDoc(ref, firestoreStatePayload(state));
+          const payload = firestoreStatePayload(state);
+          await cloudSync.api.setDoc(ref, payload);
+          cloudSync.lastSavedHash = payload.stateHash || cloudStateHash(state);
         }
       } catch (error) {
         console.warn("Routiner Firestore sync failed", error);
@@ -3182,13 +3431,13 @@
         cloudSync.auth = authMod.getAuth(cloudSync.app);
         cloudSync.db = firestoreMod.getFirestore(cloudSync.app);
         cloudSync.api = {
-          createUserWithEmailAndPassword: authMod.createUserWithEmailAndPassword,
           signInWithEmailAndPassword: authMod.signInWithEmailAndPassword,
           signOut: authMod.signOut,
           onAuthStateChanged: authMod.onAuthStateChanged,
           doc: firestoreMod.doc,
           getDoc: firestoreMod.getDoc,
           setDoc: firestoreMod.setDoc,
+          onSnapshot: firestoreMod.onSnapshot,
           serverTimestamp: firestoreMod.serverTimestamp
         };
         cloudSync.ready = true;
@@ -3199,8 +3448,10 @@
           if (user) {
             showAuthMessage("불러오는 중", "info");
             await syncCloudAfterSignIn();
+            startCloudSnapshot();
             showSignedInScreen();
           } else {
+            stopCloudSnapshot();
             showSignedOutScreen();
           }
         });
@@ -3214,7 +3465,7 @@
       }
     }
 
-    async function handleEmailAuth(mode) {
+    async function handleEmailLogin() {
       if (!cloudSync.ready || !cloudSync.auth) {
         showAuthMessage("Firebase 준비 안 됨", "error");
         return;
@@ -3224,15 +3475,11 @@
         showAuthMessage("이메일과 비밀번호를 입력해.", "error");
         return;
       }
-      setAuthBusy(true, mode === "signup" ? "처음 연결 중" : "로그인 중");
+      setAuthBusy(true, "로그인 중");
       try {
-        if (mode === "signup") {
-          await cloudSync.api.createUserWithEmailAndPassword(cloudSync.auth, email, password);
-        } else {
-          await cloudSync.api.signInWithEmailAndPassword(cloudSync.auth, email, password);
-        }
+        await cloudSync.api.signInWithEmailAndPassword(cloudSync.auth, email, password);
       } catch (error) {
-        showAuthMessage(formatAuthError(error, mode), "error");
+        showAuthMessage(formatAuthError(error), "error");
       } finally {
         setAuthBusy(false);
       }
@@ -3657,6 +3904,7 @@
     function startRoutine(routineId) {
       const routine = getRoutine(routineId) || state.routines[0];
       if (!routine) return;
+      if (!claimActiveRunForRoutine(routine)) return;
       if (effectiveOffForDate(todayKey(), routine.id)) {
         if (hasOwn(getDayPlan(todayKey(), false)?.off, routine.id)) setPlanOff(todayKey(), routine.id, false);
         delete state.offToday[routine.id];
@@ -3893,6 +4141,7 @@
       const routine = getRoutine(activeRoutineId);
       if (!routine) return;
       state.completed[activeRoutineId] = new Date().toISOString();
+      clearCloudActiveRunIf(activeRoutineId);
       saveState();
       renderDoneScreen(routine.id, true);
     }
@@ -3950,6 +4199,7 @@
         startRoutine(activeRoutineId);
       } else {
         renderHome();
+        applyPendingRemoteIfSafe();
       }
     }
 
@@ -4363,6 +4613,7 @@
 
     const hadStoredStateAtBoot = Boolean(localStorage.getItem(STORAGE_KEY));
     let state = loadState();
+    let lastLocalCloudHash = cloudStateHash(state);
     if (hadStoredStateAtBoot) ensureLocalUpdatedAt();
     let tickId = null;
     let activeRoutineId = null;
@@ -4470,9 +4721,8 @@
     });
     els.authForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      handleEmailAuth("login");
+      handleEmailLogin();
     });
-    els.authSignupBtn.addEventListener("click", () => handleEmailAuth("signup"));
     els.backupInput.addEventListener("input", updateBackupImportButton);
     els.backupClearBtn.addEventListener("click", clearBackupInput);
     els.backupImportBtn.addEventListener("click", importBackupFromInput);
@@ -4482,6 +4732,9 @@
       if (!backupPanelOpen) return;
       if (els.heroArea.contains(event.target)) return;
       setBackupPanelOpen(false);
+    });
+    document.addEventListener("focusout", () => {
+      window.setTimeout(applyPendingRemoteIfSafe, 160);
     });
 
     els.todayLabel.addEventListener("click", openCalendar);
