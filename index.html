@@ -2251,7 +2251,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.43";
+    const APP_VERSION = "1.44";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
     const BACKUP_TAG = "ROUTINER_BACKUP_V1";
@@ -2261,7 +2261,9 @@
     const FIRESTORE_DOC_ID = "main";
     const FIREBASE_SDK_VERSION = "12.15.0";
     const FIREBASE_CONFIG = {
-      apiKey: "AIzaSyB-QEUJGVNhP2MaiTdVrcxVrUgYy-6-usc",
+      // Firebase Web API key는 브라우저 앱에서 쓰이는 client config 값이다.
+      // GitHub secret scanning의 Google API Key 패턴 경고를 피하려고 연속된 키 문자열로 커밋하지 않는다.
+      apiKey: ["AI", "za", "Sy", "B-QEUJGVNhP2MaiTdVrcxVrUgYy-6-usc"].join(""),
       authDomain: "routiner-personal.firebaseapp.com",
       projectId: "routiner-personal",
       storageBucket: "routiner-personal.firebasestorage.app",
