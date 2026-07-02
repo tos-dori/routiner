@@ -1,0 +1,101 @@
+name: ChatGPT departure input focus patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/chatgpt_departure_focus_patch.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Patch index.html
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          if 'const APP_VERSION = "1.48";' not in s:
+              if 'const APP_VERSION = "1.47";' not in s:
+                  raise SystemExit('APP_VERSION 1.47 not found')
+              s = s.replace('const APP_VERSION = "1.47";', 'const APP_VERSION = "1.48";', 1)
+
+          old = '''      if (isDepartureCapture) {
+        els.stepMemo.classList.remove("empty");
+        els.stepMemo.classList.add("has-departure");
+        els.stepMemo.innerHTML = `
+          <div class="departure-editor">
+            <label for="departureInput">출발</label>
+            <input id="departureInput" class="departure-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="예: 11:50" value="${escapeAttr(departureText)}" />
+          </div>
+        `;
+      } else {'''
+
+          new = '''      if (isDepartureCapture) {
+        els.stepMemo.classList.remove("empty");
+        els.stepMemo.classList.add("has-departure");
+        const existingDepartureInput = document.getElementById("departureInput");
+        const canReuseDepartureInput = existingDepartureInput && els.stepMemo.contains(existingDepartureInput);
+        if (!canReuseDepartureInput) {
+          els.stepMemo.innerHTML = `
+            <div class="departure-editor">
+              <label for="departureInput">출발</label>
+              <input id="departureInput" class="departure-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="예: 11:50" value="${escapeAttr(departureText)}" />
+            </div>
+          `;
+        } else if (document.activeElement !== existingDepartureInput && existingDepartureInput.value !== departureText) {
+          existingDepartureInput.value = departureText;
+        }
+      } else {'''
+
+          if 'canReuseDepartureInput' not in s:
+              if old not in s:
+                  raise SystemExit('departure input block not found')
+              s = s.replace(old, new, 1)
+
+          if 'canReuseDepartureInput' not in s or 'const APP_VERSION = "1.48";' not in s:
+              raise SystemExit('patch verification failed')
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Check JavaScript syntax
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          s = Path('index.html').read_text(encoding='utf-8')
+          parts = []
+          pos = 0
+          while True:
+              start = s.find('<script>', pos)
+              if start == -1:
+                  break
+              start += len('<script>')
+              end = s.find('</script>', start)
+              if end == -1:
+                  raise SystemExit('unclosed script tag')
+              parts.append(s[start:end])
+              pos = end + len('</script>')
+          Path('/tmp/routiner_scripts.js').write_text('\n;\n'.join(parts), encoding='utf-8')
+          PY
+          node --check /tmp/routiner_scripts.js
+      - name: Remove temporary workflow and commit
+        run: |
+          rm -f .github/workflows/chatgpt_departure_focus_patch.yml
+          git config user.name "chatgpt-patch"
+          git config user.email "chatgpt-patch@users.noreply.github.com"
+          git add index.html .github/workflows/chatgpt_departure_focus_patch.yml
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "fix: preserve departure input focus"
+          git push
