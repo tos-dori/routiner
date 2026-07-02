@@ -1,5 +1,6 @@
 name: ChatGPT departure input focus patch
 
+# trigger: 2
 on:
   push:
     branches: [main]
