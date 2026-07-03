@@ -2250,7 +2250,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.47";
+    const APP_VERSION = "1.48";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
     const BACKUP_TAG = "ROUTINER_BACKUP_V1";
@@ -4044,12 +4044,18 @@
       if (isDepartureCapture) {
         els.stepMemo.classList.remove("empty");
         els.stepMemo.classList.add("has-departure");
-        els.stepMemo.innerHTML = `
-          <div class="departure-editor">
-            <label for="departureInput">출발</label>
-            <input id="departureInput" class="departure-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="예: 11:50" value="${escapeAttr(departureText)}" />
-          </div>
-        `;
+        const existingDepartureInput = document.getElementById("departureInput");
+        const canReuseDepartureInput = existingDepartureInput && els.stepMemo.contains(existingDepartureInput);
+        if (!canReuseDepartureInput) {
+          els.stepMemo.innerHTML = `
+            <div class="departure-editor">
+              <label for="departureInput">출발</label>
+              <input id="departureInput" class="departure-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="예: 11:50" value="${escapeAttr(departureText)}" />
+            </div>
+          `;
+        } else if (document.activeElement !== existingDepartureInput && existingDepartureInput.value !== departureText) {
+          existingDepartureInput.value = departureText;
+        }
       } else {
         els.stepMemo.classList.remove("has-departure");
         els.stepMemo.textContent = note || "";
