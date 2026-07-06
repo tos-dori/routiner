@@ -1601,17 +1601,45 @@
     }
 
     .calendar-head {
-      display: flex;
+      display: grid;
+      grid-template-columns: 38px minmax(0, 1fr) 38px;
       align-items: center;
-      justify-content: space-between;
       gap: 10px;
       padding: 0 2px 2px;
     }
 
+    .calendar-month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
     .calendar-title {
+      min-width: 104px;
+      text-align: center;
       font-size: 18px;
       font-weight: 950;
       letter-spacing: -0.04em;
+    }
+
+    .calendar-nav-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(67, 54, 38, 0.055);
+      color: rgba(67, 54, 38, 0.62);
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .calendar-nav-btn:active {
+      transform: scale(0.96);
+      background: rgba(67, 54, 38, 0.09);
     }
 
     .calendar-close {
@@ -2239,7 +2267,12 @@
   <div class="calendar-overlay" id="calendarOverlay" aria-hidden="true">
     <div class="calendar-panel" role="dialog" aria-modal="true" aria-label="월간 루틴 기록">
       <header class="calendar-head">
-        <div class="calendar-title" id="calendarTitle">이번 달</div>
+        <span aria-hidden="true"></span>
+        <div class="calendar-month-nav" aria-label="월 이동">
+          <button class="calendar-nav-btn" id="calendarPrevBtn" type="button" aria-label="이전 달">‹</button>
+          <div class="calendar-title" id="calendarTitle">이번 달</div>
+          <button class="calendar-nav-btn" id="calendarNextBtn" type="button" aria-label="다음 달">›</button>
+        </div>
         <button class="calendar-close" id="calendarCloseBtn" type="button" aria-label="달력 닫기">×</button>
       </header>
       <div class="calendar-weekdays" aria-hidden="true">
@@ -2250,7 +2283,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.49";
+    const APP_VERSION = "1.50";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
     const BACKUP_TAG = "ROUTINER_BACKUP_V1";
@@ -2318,7 +2351,7 @@
           { id: "m4", icon: "🚶", title: "집 안 걷기", note: "", minutes: 5 },
           { id: "m5", icon: "🚿", title: "씻기", note: "", minutes: 8 },
           { id: "m6", icon: "👕", title: "옷 입기", note: "양말까지", minutes: 3 },
-          { id: "m7", icon: "🎒", title: "가방 열기", note: "충전기, 자료, 필기구", minutes: 3 },
+          { id: "m7", icon: "🎒", title: "가방 열기", note: "물, 충전기, 자료, 필기구", minutes: 3 },
           { id: "m8", icon: "🚪", title: "문 앞 보기", note: "폰, 지갑, 키, 이어폰", minutes: 1 },
           { id: "m9", icon: "🚶", title: "독서실 가기", note: "", minutes: 8 }
         ]
@@ -2374,7 +2407,7 @@
           { id: "o7", icon: "🪒", title: "면도하기", note: "", minutes: 3 },
           { id: "o8", icon: "🧴", title: "로션 바르기", note: "립밤까지", minutes: 2 },
           { id: "o9", icon: "🧥", title: "옷 입기", note: "", minutes: 3 },
-          { id: "o10", icon: "🎒", title: "가방 열기", note: "어제 안 챙긴 음식, 전자기기\n\n지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 4 },
+          { id: "o10", icon: "🎒", title: "가방 열기", note: "어제 안 챙긴 음식, 전자기기\n\n물, 지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 4 },
           { id: "o11", icon: "🪞", title: "거울 보기", note: "얼굴, 머리, 옷", minutes: 1 },
           { id: "o12", icon: "👟", title: "신발 신기", note: "가방 메기", minutes: 2 },
           { id: "o13", icon: "🚪", title: "나가기", note: "시간 확인", minutes: 1 }
@@ -2392,7 +2425,7 @@
           { id: "n2", icon: "✍️", title: "일기 쓰기", note: "3줄만", minutes: 3 },
           { id: "n3", icon: "💌", title: "연락하기", note: "썸원도 쓰기", minutes: 15 },
           { id: "n5", icon: "🧩", title: "첫 Step 정하기", note: "내일 할 일 시작부분 하나만 정하기", minutes: 4 },
-          { id: "n6", icon: "🎒", title: "준비물 챙기기", note: "음식, 전자기기 제외\n지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 5 },
+          { id: "n6", icon: "🎒", title: "준비물 챙기기", note: "음식, 전자기기 제외\n물, 지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 5 },
           { id: "n7", icon: "🔌", title: "폰 충전 꽂기", note: "침대 밖", minutes: 1 },
           { id: "n8", icon: "🫧", title: "세수하기", note: "", minutes: 2 },
           { id: "n9", icon: "🪥", title: "양치하기", note: "", minutes: 3 },
@@ -2429,6 +2462,8 @@
       calendarOverlay: document.getElementById("calendarOverlay"),
       calendarTitle: document.getElementById("calendarTitle"),
       calendarGrid: document.getElementById("calendarGrid"),
+      calendarPrevBtn: document.getElementById("calendarPrevBtn"),
+      calendarNextBtn: document.getElementById("calendarNextBtn"),
       calendarCloseBtn: document.getElementById("calendarCloseBtn"),
       openEditBtn: document.getElementById("openEditBtn"),
       closeEditBtn: document.getElementById("closeEditBtn"),
@@ -2809,7 +2844,8 @@
         m3: { oldNotes: ["세수, 샤워 필요하면 샤워", "세수, 머리, 샤워"], newNote: "", oldMinutes: [8], newMinutes: 10 },
         m4: { oldNotes: [""], newNote: "양말까지", oldMinutes: [3], newMinutes: 4 },
         m5: { oldMinutes: [3], newMinutes: 4 },
-        m6: { oldMinutes: [1], newMinutes: 2 }
+        m6: { oldMinutes: [1], newMinutes: 2 },
+        m7: { oldNotes: ["충전기, 자료, 필기구"], newNote: "물, 충전기, 자료, 필기구" }
       },
       lunch: {
         l1: { oldMinutes: [0.5], newMinutes: 1 },
@@ -2844,7 +2880,12 @@
           oldMinutes: [3],
           newMinutes: 4
         },
-        o10: { oldMinutes: [1], newMinutes: 2 },
+        o10: {
+          oldNotes: ["어제 안 챙긴 음식, 전자기기\n\n지갑, 충전기, 우양산, 칫솔, 파우치"],
+          newNote: "어제 안 챙긴 음식, 전자기기\n\n물, 지갑, 충전기, 우양산, 칫솔, 파우치",
+          oldMinutes: [1],
+          newMinutes: 2
+        },
         o11: { oldMinutes: [1], newMinutes: 2 },
         o12: {
           oldNotes: [""],
@@ -2878,7 +2919,7 @@
           oldTitles: ["들고 갈 것 적기"],
           newTitle: "준비물 챙기기",
           oldNotes: ["가방 메모", "가방에 넣을 것", "음식, 전자기기 제외, 지갑, 충전기, 우양산, 칫솔, 파우치", "음식, 전자기기 제외\n지갑, 충전기, 우양산, 칫솔, 파우치"],
-          newNote: "음식, 전자기기 제외\n지갑, 충전기, 우양산, 칫솔, 파우치",
+          newNote: "음식, 전자기기 제외\n물, 지갑, 충전기, 우양산, 칫솔, 파우치",
           oldMinutes: [2, 4],
           newMinutes: 5
         },
@@ -3908,6 +3949,12 @@
       els.calendarOverlay.setAttribute("aria-hidden", "true");
     }
 
+    function shiftCalendarMonth(delta) {
+      const base = dateFromKey(selectedDateKey || todayKey());
+      selectedDateKey = dateKeyFromDate(new Date(base.getFullYear(), base.getMonth() + delta, 1));
+      renderCalendar();
+    }
+
     function startRoutine(routineId) {
       const routine = getRoutine(routineId) || state.routines[0];
       if (!routine) return;
@@ -4751,6 +4798,8 @@
     });
 
     els.todayLabel.addEventListener("click", openCalendar);
+    els.calendarPrevBtn.addEventListener("click", () => shiftCalendarMonth(-1));
+    els.calendarNextBtn.addEventListener("click", () => shiftCalendarMonth(1));
     els.calendarCloseBtn.addEventListener("click", closeCalendar);
     els.calendarOverlay.addEventListener("click", (event) => {
       if (event.target === els.calendarOverlay) closeCalendar();
