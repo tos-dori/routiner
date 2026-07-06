@@ -53,7 +53,7 @@
 
     * { box-sizing: border-box; }
 
-    html { touch-action: pan-x pan-y; }
+    html { overscroll-behavior: none; }
 
     html, body {
       margin: 0;
@@ -118,6 +118,7 @@
       overscroll-behavior-y: contain;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
+      touch-action: pan-y;
     }
 
     .app.plan-mode::before {
@@ -261,8 +262,28 @@
       text-align: center;
     }
 
+    .edit-topbar {
+      display: grid;
+      grid-template-columns: 64px minmax(0, 1fr) 64px;
+      align-items: center;
+      gap: 0;
+    }
+
     .edit-topbar .save-status {
+      width: 64px;
       justify-content: flex-start;
+    }
+
+    .edit-topbar .top-title {
+      width: 100%;
+      justify-self: center;
+      text-align: center;
+    }
+
+    .edit-topbar #closeEditBtn {
+      width: 64px;
+      padding: 0;
+      justify-self: end;
     }
 
     .icon-top-btn svg {
@@ -793,6 +814,9 @@
       color: var(--day-note-ink);
       resize: none;
       overflow-y: auto;
+      overscroll-behavior-y: contain;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
       font-size: 16px;
       line-height: 1.28;
       font-weight: 620;
@@ -1111,6 +1135,8 @@
       scrollbar-width: thin;
       scrollbar-color: rgba(80,70,60,0.18) transparent;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      touch-action: pan-y;
     }
 
     .memo-input.empty {
@@ -1133,6 +1159,9 @@
       line-height: 1.32;
       font-weight: 650;
       outline: none;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      touch-action: pan-y;
       scrollbar-width: thin;
       scrollbar-color: rgba(80,70,60,0.22) transparent;
     }
@@ -1332,7 +1361,9 @@
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
+      overscroll-behavior-y: contain;
       -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
       background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 249, 236, 0.74));
       border: 1px solid var(--line);
       border-radius: 24px;
@@ -4746,6 +4777,10 @@
       return null;
     }
 
+    function preventTouchScroll(event) {
+      if (event.cancelable) event.preventDefault();
+    }
+
     function resetRootScrollPosition(options = {}) {
       if (activeElementIsTextInput()) return;
       const forceApp = Boolean(options.forceApp);
@@ -4785,23 +4820,24 @@
       if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
 
       const target = event.target;
-      const horizontalScroller = findScrollableAncestor(target, "x");
-      if (horizontalScroller && Math.abs(dx) > Math.abs(dy)) {
-        const canScrollLeft = horizontalScroller.scrollLeft > 0;
-        const canScrollRight = horizontalScroller.scrollLeft + horizontalScroller.clientWidth < horizontalScroller.scrollWidth - 1;
-        if ((dx > 0 && !canScrollLeft) || (dx < 0 && !canScrollRight)) event.preventDefault();
+      const axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      const scroller = findScrollableAncestor(target, axis);
+      if (!scroller) {
+        preventTouchScroll(event);
         return;
       }
 
-      const verticalScroller = findScrollableAncestor(target, "y");
-      if (!verticalScroller) {
-        event.preventDefault();
+      if (axis === "x") {
+        const canScrollLeft = scroller.scrollLeft > 0;
+        const canScrollRight = scroller.scrollLeft + scroller.clientWidth < scroller.scrollWidth - 1;
+        if ((dx > 0 && !canScrollLeft) || (dx < 0 && !canScrollRight)) preventTouchScroll(event);
         return;
       }
-      const canScrollUp = verticalScroller.scrollTop > 0;
-      const canScrollDown = verticalScroller.scrollTop + verticalScroller.clientHeight < verticalScroller.scrollHeight - 1;
+
+      const canScrollUp = scroller.scrollTop > 0;
+      const canScrollDown = scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 1;
       if ((dy > 0 && !canScrollUp) || (dy < 0 && !canScrollDown)) {
-        event.preventDefault();
+        preventTouchScroll(event);
       }
     }
 
