@@ -69,11 +69,15 @@
     }
 
     body {
+      position: fixed;
+      inset: 0;
       height: 100dvh;
+      max-width: 100%;
       display: flex;
       justify-content: center;
       padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
       overflow: hidden;
+      overscroll-behavior: none;
     }
 
     body.plan-mode {
@@ -111,6 +115,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       overscroll-behavior: contain;
+      overscroll-behavior-y: contain;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
     }
@@ -1628,13 +1633,22 @@
       width: 30px;
       height: 30px;
       border-radius: 999px;
-      display: grid;
-      place-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
       background: rgba(67, 54, 38, 0.055);
       color: rgba(67, 54, 38, 0.62);
       font-size: 20px;
       font-weight: 900;
       line-height: 1;
+    }
+
+    .calendar-btn-glyph {
+      display: block;
+      line-height: 1;
+      transform: translateY(-1px);
+      pointer-events: none;
     }
 
     .calendar-nav-btn:active {
@@ -1646,13 +1660,19 @@
       width: 38px;
       height: 38px;
       border-radius: 999px;
-      display: grid;
-      place-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
       background: rgba(67, 54, 38, 0.08);
       color: var(--muted);
       font-size: 25px;
       font-weight: 800;
       line-height: 1;
+    }
+
+    .calendar-close .calendar-btn-glyph {
+      transform: translateY(-1px);
     }
 
     .calendar-weekdays {
@@ -2269,11 +2289,11 @@
       <header class="calendar-head">
         <span aria-hidden="true"></span>
         <div class="calendar-month-nav" aria-label="월 이동">
-          <button class="calendar-nav-btn" id="calendarPrevBtn" type="button" aria-label="이전 달">‹</button>
+          <button class="calendar-nav-btn" id="calendarPrevBtn" type="button" aria-label="이전 달"><span class="calendar-btn-glyph" aria-hidden="true">‹</span></button>
           <div class="calendar-title" id="calendarTitle">이번 달</div>
-          <button class="calendar-nav-btn" id="calendarNextBtn" type="button" aria-label="다음 달">›</button>
+          <button class="calendar-nav-btn" id="calendarNextBtn" type="button" aria-label="다음 달"><span class="calendar-btn-glyph" aria-hidden="true">›</span></button>
         </div>
-        <button class="calendar-close" id="calendarCloseBtn" type="button" aria-label="달력 닫기">×</button>
+        <button class="calendar-close" id="calendarCloseBtn" type="button" aria-label="달력 닫기"><span class="calendar-btn-glyph" aria-hidden="true">×</span></button>
       </header>
       <div class="calendar-weekdays" aria-hidden="true">
         <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
@@ -2283,7 +2303,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.50";
+    const APP_VERSION = "1.51";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
     const BACKUP_TAG = "ROUTINER_BACKUP_V1";
@@ -3691,6 +3711,7 @@
       els.done.classList.toggle("active", name === "done");
       els.edit.classList.toggle("active", name === "edit");
       syncWakeLock(name);
+      if (name !== "edit") scheduleRootScrollReset({ forceApp: name === "home" || name === "run" || name === "done" || name === "auth" });
     }
 
     function minutesNow() {
@@ -3859,6 +3880,7 @@
         });
         els.routineList.appendChild(btn);
       });
+      scheduleRootScrollReset({ forceApp: true });
     }
 
 
@@ -4690,6 +4712,103 @@
     let backupPanelOpen = false;
     let brandLongPressTimer = null;
     let brandLongPressed = false;
+    let rootTouchStart = null;
+    let rootScrollResetTimer = null;
+
+    function activeElementIsTextInput() {
+      const active = document.activeElement;
+      return Boolean(active && active.closest && active.closest("input, textarea, select, [contenteditable='true']"));
+    }
+
+    function activeMainScreenName() {
+      if (els.edit.classList.contains("active")) return "edit";
+      if (els.run.classList.contains("active")) return "run";
+      if (els.done.classList.contains("active")) return "done";
+      if (els.home.classList.contains("active")) return "home";
+      if (els.auth.classList.contains("active")) return "auth";
+      return "";
+    }
+
+    function canElementScroll(el, axis) {
+      if (!el || el === document || el === window) return false;
+      if (axis === "x") return el.scrollWidth > el.clientWidth + 1;
+      return el.scrollHeight > el.clientHeight + 1;
+    }
+
+    function findScrollableAncestor(target, axis) {
+      let node = target instanceof Element ? target : target?.parentElement;
+      while (node && node !== document.body && node !== document.documentElement) {
+        const style = window.getComputedStyle(node);
+        const overflow = axis === "x" ? style.overflowX : style.overflowY;
+        if (canElementScroll(node, axis) && /(auto|scroll|overlay)/.test(overflow)) return node;
+        node = node.parentElement;
+      }
+      return null;
+    }
+
+    function resetRootScrollPosition(options = {}) {
+      if (activeElementIsTextInput()) return;
+      const forceApp = Boolean(options.forceApp);
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      const screen = activeMainScreenName();
+      const shouldResetApp = forceApp || screen === "run" || screen === "done" || screen === "auth" || !canElementScroll(els.app, "y");
+      if (screen !== "edit" && shouldResetApp && els.app.scrollTop !== 0) {
+        els.app.scrollTop = 0;
+      }
+    }
+
+    function scheduleRootScrollReset(options = {}) {
+      if (rootScrollResetTimer) window.clearTimeout(rootScrollResetTimer);
+      window.requestAnimationFrame(() => resetRootScrollPosition(options));
+      rootScrollResetTimer = window.setTimeout(() => {
+        rootScrollResetTimer = null;
+        resetRootScrollPosition(options);
+      }, 80);
+    }
+
+    function handleRootTouchStart(event) {
+      if (!event.touches || event.touches.length !== 1) {
+        rootTouchStart = null;
+        return;
+      }
+      const touch = event.touches[0];
+      rootTouchStart = { x: touch.clientX, y: touch.clientY };
+    }
+
+    function handleRootTouchMove(event) {
+      if (!rootTouchStart || !event.touches || event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      const dx = touch.clientX - rootTouchStart.x;
+      const dy = touch.clientY - rootTouchStart.y;
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+
+      const target = event.target;
+      const horizontalScroller = findScrollableAncestor(target, "x");
+      if (horizontalScroller && Math.abs(dx) > Math.abs(dy)) {
+        const canScrollLeft = horizontalScroller.scrollLeft > 0;
+        const canScrollRight = horizontalScroller.scrollLeft + horizontalScroller.clientWidth < horizontalScroller.scrollWidth - 1;
+        if ((dx > 0 && !canScrollLeft) || (dx < 0 && !canScrollRight)) event.preventDefault();
+        return;
+      }
+
+      const verticalScroller = findScrollableAncestor(target, "y");
+      if (!verticalScroller) {
+        event.preventDefault();
+        return;
+      }
+      const canScrollUp = verticalScroller.scrollTop > 0;
+      const canScrollDown = verticalScroller.scrollTop + verticalScroller.clientHeight < verticalScroller.scrollHeight - 1;
+      if ((dy > 0 && !canScrollUp) || (dy < 0 && !canScrollDown)) {
+        event.preventDefault();
+      }
+    }
+
+    function handleRootTouchEnd() {
+      rootTouchStart = null;
+      scheduleRootScrollReset({ forceApp: false });
+    }
 
     function setBackupPanelOpen(open) {
       backupPanelOpen = Boolean(open);
@@ -4795,7 +4914,12 @@
     });
     document.addEventListener("focusout", () => {
       window.setTimeout(applyPendingRemoteIfSafe, 160);
+      window.setTimeout(() => scheduleRootScrollReset({ forceApp: false }), 180);
     });
+    document.addEventListener("touchstart", handleRootTouchStart, { passive: true });
+    document.addEventListener("touchmove", handleRootTouchMove, { passive: false });
+    document.addEventListener("touchend", handleRootTouchEnd, { passive: true });
+    document.addEventListener("touchcancel", handleRootTouchEnd, { passive: true });
 
     els.todayLabel.addEventListener("click", openCalendar);
     els.calendarPrevBtn.addEventListener("click", () => shiftCalendarMonth(-1));
@@ -4981,9 +5105,15 @@
     });
 
     window.addEventListener("resize", () => {
+      scheduleRootScrollReset({ forceApp: false });
       if (!els.stepPreview?.children.length) return;
       requestAnimationFrame(recalcPreviewEdgeSpacers);
     });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", () => scheduleRootScrollReset({ forceApp: false }));
+      window.visualViewport.addEventListener("scroll", () => scheduleRootScrollReset({ forceApp: false }));
+    }
 
     window.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && els.calendarOverlay.classList.contains("active")) closeCalendar();
