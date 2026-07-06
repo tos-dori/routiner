@@ -2250,7 +2250,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.48";
+    const APP_VERSION = "1.49";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
     const BACKUP_TAG = "ROUTINER_BACKUP_V1";
@@ -2313,42 +2313,48 @@
         doneText: "독서실 도착. 이제 첫 Step만 열면 된다.",
         steps: [
           { id: "m1", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
-          { id: "m2", icon: "🍚", title: "아침 먹기", note: "", minutes: 15 },
-          { id: "m3", icon: "🚿", title: "씻기", note: "", minutes: 10 },
-          { id: "m4", icon: "👕", title: "옷 입기", note: "양말까지", minutes: 4 },
-          { id: "m5", icon: "🎒", title: "가방 열기", note: "충전기, 자료, 필기구", minutes: 4 },
-          { id: "m6", icon: "🚪", title: "문 앞 확인하기", note: "폰, 지갑, 키, 이어폰", minutes: 2 },
-          { id: "m7", icon: "🚶", title: "독서실 가기", note: "", minutes: 8 }
+          { id: "m2", icon: "🙆", title: "목·어깨 풀기", note: "", minutes: 3 },
+          { id: "m3", icon: "🍚", title: "아침 먹기", note: "", minutes: 20 },
+          { id: "m4", icon: "🚶", title: "집 안 걷기", note: "", minutes: 5 },
+          { id: "m5", icon: "🚿", title: "씻기", note: "", minutes: 8 },
+          { id: "m6", icon: "👕", title: "옷 입기", note: "양말까지", minutes: 3 },
+          { id: "m7", icon: "🎒", title: "가방 열기", note: "충전기, 자료, 필기구", minutes: 3 },
+          { id: "m8", icon: "🚪", title: "문 앞 보기", note: "폰, 지갑, 키, 이어폰", minutes: 1 },
+          { id: "m9", icon: "🚶", title: "독서실 가기", note: "", minutes: 8 }
         ]
       },
       {
         id: "lunch",
         icon: "☀️",
-        name: "점심 후 복귀",
+        name: "점심 루틴",
         color: "#A6A43A",
         soft: "#EEF0CF",
-        doneText: "복귀 완료. 방금 하던 자료부터 열자.",
+        doneText: "복귀 완료. Step부터 열자.",
         steps: [
-          { id: "l1", icon: "💧", title: "물 마시기", note: "", minutes: 1 },
-          { id: "l2", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
-          { id: "l3", icon: "🧍", title: "일어나기", note: "자리 정리", minutes: 1 },
-          { id: "l4", icon: "↩", title: "독서실 가기", note: "", minutes: 8 },
-          { id: "l5", icon: "📖", title: "자료 열기", note: "방금 하던 것", minutes: 2 }
+          { id: "l1", icon: "🧍", title: "일어나기", note: "자리 정리", minutes: 1 },
+          { id: "l2", icon: "🏠", title: "집 가기", note: "", minutes: 8 },
+          { id: "l3", icon: "🍚", title: "점심 먹기", note: "", minutes: 25 },
+          { id: "l4", icon: "💧", title: "물 마시기", note: "", minutes: 1 },
+          { id: "l5", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
+          { id: "l6", icon: "🚶", title: "걸어서 복귀", note: "", minutes: 15 },
+          { id: "l7", icon: "▶", title: "Step 열기", note: "방금 하던 것", minutes: 1 }
         ]
       },
       {
         id: "dinner",
         icon: "🌆",
-        name: "저녁 후 복귀",
+        name: "저녁 루틴",
         color: "#2389C7",
         soft: "#DCEFFA",
-        doneText: "복귀 완료. 오늘 남은 것 하나만 열자.",
+        doneText: "복귀 완료. Step부터 열자.",
         steps: [
-          { id: "d1", icon: "💧", title: "물 마시기", note: "", minutes: 1 },
-          { id: "d2", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
-          { id: "d3", icon: "🧍", title: "일어나기", note: "자리 정리", minutes: 1 },
-          { id: "d4", icon: "↩", title: "독서실 가기", note: "", minutes: 8 },
-          { id: "d5", icon: "📖", title: "자료 열기", note: "남은 것 하나", minutes: 2 }
+          { id: "d1", icon: "🧍", title: "일어나기", note: "자리 정리", minutes: 1 },
+          { id: "d2", icon: "🏠", title: "집 가기", note: "", minutes: 8 },
+          { id: "d3", icon: "🍚", title: "저녁 먹기", note: "", minutes: 30 },
+          { id: "d4", icon: "💧", title: "물 마시기", note: "", minutes: 1 },
+          { id: "d5", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
+          { id: "d6", icon: "🚶", title: "걸어서 복귀", note: "", minutes: 15 },
+          { id: "d7", icon: "▶", title: "Step 열기", note: "오늘 남은 것", minutes: 1 }
         ]
       },
       {
@@ -2359,18 +2365,19 @@
         soft: "#F4E5CC",
         doneText: "외출 준비 완료. 출발하자.",
         steps: [
-          { id: "o1", icon: "🗺", title: "지도 열기", note: "도착 시간 보기", minutes: 3 },
-          { id: "o2", icon: "⏰", title: "출발 시각 적기", note: "", minutes: 1, capture: "departure" },
-          { id: "o3", icon: "👕", title: "옷 꺼내기", note: "바지 - (신발) - 아우터 - 상의\n+속옷, 양말", minutes: 5 },
-          { id: "o4", icon: "🔌", title: "충전 꽂기", note: "폰, 보조배터리, 이어폰", minutes: 2 },
-          { id: "o5", icon: "🚿", title: "샤워하기", note: "", minutes: 25 },
-          { id: "o6", icon: "🪒", title: "면도하기", note: "", minutes: 4 },
-          { id: "o7", icon: "🧴", title: "로션 바르기", note: "립밤까지", minutes: 2 },
-          { id: "o8", icon: "🧥", title: "옷 입기", note: "", minutes: 4 },
-          { id: "o9", icon: "🎒", title: "가방 열기", note: "어제 안 챙긴 음식, 전자기기\n\n지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 4 },
-          { id: "o10", icon: "🪞", title: "거울 보기", note: "얼굴, 머리, 옷", minutes: 2 },
-          { id: "o11", icon: "👟", title: "신발 신기", note: "가방 메기", minutes: 2 },
-          { id: "o12", icon: "🚪", title: "나가기", note: "시간 확인", minutes: 1 }
+          { id: "o1", icon: "📶", title: "와이파이 끄기", note: "", minutes: 0.5 },
+          { id: "o2", icon: "🗺", title: "지도 보기", note: "도착 시간 보기", minutes: 2.5 },
+          { id: "o3", icon: "⏰", title: "출발 적기", note: "", minutes: 1, capture: "departure" },
+          { id: "o4", icon: "👕", title: "옷 꺼내기", note: "바지 - (신발) - 아우터 - 상의\n+속옷, 양말", minutes: 4 },
+          { id: "o5", icon: "🔌", title: "충전 꽂기", note: "폰, 보조배터리, 이어폰", minutes: 1 },
+          { id: "o6", icon: "🚿", title: "샤워하기", note: "", minutes: 25 },
+          { id: "o7", icon: "🪒", title: "면도하기", note: "", minutes: 3 },
+          { id: "o8", icon: "🧴", title: "로션 바르기", note: "립밤까지", minutes: 2 },
+          { id: "o9", icon: "🧥", title: "옷 입기", note: "", minutes: 3 },
+          { id: "o10", icon: "🎒", title: "가방 열기", note: "어제 안 챙긴 음식, 전자기기\n\n지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 4 },
+          { id: "o11", icon: "🪞", title: "거울 보기", note: "얼굴, 머리, 옷", minutes: 1 },
+          { id: "o12", icon: "👟", title: "신발 신기", note: "가방 메기", minutes: 2 },
+          { id: "o13", icon: "🚪", title: "나가기", note: "시간 확인", minutes: 1 }
         ]
       },
       {
