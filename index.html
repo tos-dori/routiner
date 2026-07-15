@@ -931,7 +931,7 @@
       background: linear-gradient(160deg, rgba(255, 255, 255, 0.88), rgba(255, 249, 236, 0.74));
       border: 1px solid var(--line);
       border-radius: 32px;
-      padding: 14px 10px 10px;
+      padding: 14px 10px 6px;
       box-shadow: var(--shadow);
       overflow: hidden;
     }
@@ -1123,6 +1123,12 @@
       flex: 0 0 82px;
     }
 
+    .run .memo-wrap {
+      margin: -5px 2px 6px;
+      height: 98px;
+      flex: 0 0 98px;
+    }
+
     .memo-input {
       height: 78px;
       max-height: 78px;
@@ -1143,6 +1149,12 @@
       -webkit-overflow-scrolling: auto;
       overscroll-behavior-y: none;
       touch-action: pan-y;
+    }
+
+    .run .memo-input {
+      height: 94px;
+      max-height: 94px;
+      padding: 7px 12px;
     }
 
     .memo-input.empty {
@@ -1852,8 +1864,8 @@
 
     .reward-pop {
       position: fixed;
-      left: 50%;
-      top: 50%;
+      left: var(--reward-center-x, 50%);
+      top: var(--reward-center-y, 50%);
       width: 64px;
       height: 64px;
       border-radius: 50%;
@@ -2176,7 +2188,7 @@
 
     @media (max-height: 760px) {
       .app { padding-top: 10px; gap: 10px; }
-      .run-shell { min-height: auto; padding: 11px 8px 8px; border-radius: 28px; }
+      .run-shell { min-height: auto; padding: 11px 8px 5px; border-radius: 28px; }
       .step-preview { padding: 5px 2px 7px; min-height: 48px; }
       .preview-chip { height: 36px; font-size: 13px; padding: 0 11px; }
       .timer-zone { padding: 0 0 2px; }
@@ -2185,8 +2197,8 @@
       .task-zone { padding: 10px 4px 1px; min-height: 62px; gap: 10px; }
       .task-icon { width: 46px; height: 46px; border-radius: 17px; font-size: 24px; }
       .task-title { font-size: clamp(26px, 7.2vw, 37px); }
-      .memo-wrap { height: 66px; flex-basis: 66px; margin-bottom: 6px; }
-      .memo-input { height: 62px; max-height: 62px; font-size: 13px; padding: 6px 10px; line-height: 1.28; }
+      .run .memo-wrap { height: 86px; flex-basis: 86px; margin: -4px 2px 4px; }
+      .run .memo-input { height: 82px; max-height: 82px; font-size: 13px; padding: 6px 10px; line-height: 1.28; }
       .edit-textarea { min-height: 44px; max-height: 44px; }
       .memo-wrap.has-note .edit-textarea, .edit-textarea:focus { min-height: 68px; max-height: 96px; }
       .main-action { height: 54px; }
@@ -2340,7 +2352,7 @@
   </div>
 
   <script>
-    const APP_VERSION = "1.52";
+    const APP_VERSION = "1.53";
     const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
     const STORAGE_KEY = "personal_routine_v01";
     const BACKUP_TAG = "ROUTINER_BACKUP_V1";
@@ -2403,7 +2415,7 @@
         doneText: "독서실 도착. 이제 첫 Step만 열면 된다.",
         steps: [
           { id: "m1", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
-          { id: "m2", icon: "🙆", title: "목·어깨 풀기", note: "", minutes: 3 },
+          { id: "m2", icon: "🙆", title: "목·어깨 풀기 2세트", note: "턱 당기기 8회 │ 고개 숙이지 말고 턱만 뒤로\n어깨 돌리기 10회 │ 팔꿈치로 큰 원 그리기\n가슴 열기 20초 │ 손을 등 뒤로 잡고 천천히 펴기", minutes: 4 },
           { id: "m3", icon: "🍚", title: "아침 먹기", note: "", minutes: 20 },
           { id: "m4", icon: "🚶", title: "집 안 걷기", note: "", minutes: 5 },
           { id: "m5", icon: "🚿", title: "씻기", note: "", minutes: 8 },
@@ -2423,9 +2435,11 @@
         steps: [
           { id: "l1", icon: "🧍", title: "일어나기", note: "자리 정리", minutes: 1 },
           { id: "l2", icon: "🏠", title: "집 가기", note: "", minutes: 8 },
+          { id: "l8", icon: "🏋️", title: "하체 3세트", note: "스쿼트 10~15회 │ 엉덩이 뒤로, 허벅지 수평\n엉덩이 들기 10~15회 │ 엉덩이 조이며 들어 올리기\n런지 좌우 8~12회 │ 뒷무릎 바닥 가까이\n월싯 30~45초 │ 등·허리 벽에 붙이기", minutes: 10 },
           { id: "l3", icon: "🍚", title: "점심 먹기", note: "", minutes: 25 },
           { id: "l4", icon: "💧", title: "물 마시기", note: "", minutes: 1 },
           { id: "l5", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
+          { id: "l9", icon: "🙆", title: "가슴 펴기", note: "문틀 가슴 늘리기 좌우 30초 │ 팔을 걸고 몸을 반대로 돌리기\n어깨 돌리기 10회 │ 팔꿈치로 큰 원 그리기\n상체 비틀기 좌우 8회 │ 골반은 두고 가슴만 천천히", minutes: 2 },
           { id: "l6", icon: "🚶", title: "걸어서 복귀", note: "", minutes: 15 },
           { id: "l7", icon: "▶", title: "Step 열기", note: "방금 하던 것", minutes: 1 }
         ]
@@ -2440,9 +2454,11 @@
         steps: [
           { id: "d1", icon: "🧍", title: "일어나기", note: "자리 정리", minutes: 1 },
           { id: "d2", icon: "🏠", title: "집 가기", note: "", minutes: 8 },
+          { id: "d8", icon: "💪", title: "상체·코어 3세트", note: "턱걸이 2~3회 │ 반동 없이 턱을 바 위로\n데드버그 좌우 8~12회 │ 허리 바닥에 붙이기\n푸시업 8~15회 │ 가슴 바닥 가까이\n플랭크 20~40초 │ 머리부터 발끝 일자", minutes: 10 },
           { id: "d3", icon: "🍚", title: "저녁 먹기", note: "", minutes: 30 },
           { id: "d4", icon: "💧", title: "물 마시기", note: "", minutes: 1 },
           { id: "d5", icon: "🚽", title: "화장실 가기", note: "", minutes: 3 },
+          { id: "d9", icon: "🧍", title: "등·허리 풀기", note: "벽 짚고 등 늘리기 40초 │ 엉덩이 뒤로, 팔과 등 길게\n상체 비틀기 좌우 8회 │ 골반은 두고 가슴만 천천히\n옆구리 늘리기 좌우 30초 │ 한 팔 올리고 옆으로 기울이기", minutes: 3 },
           { id: "d6", icon: "🚶", title: "걸어서 복귀", note: "", minutes: 15 },
           { id: "d7", icon: "▶", title: "Step 열기", note: "오늘 남은 것", minutes: 1 }
         ]
@@ -2484,6 +2500,7 @@
           { id: "n5", icon: "🧩", title: "첫 Step 정하기", note: "내일 할 일 시작부분 하나만 정하기", minutes: 4 },
           { id: "n6", icon: "🎒", title: "준비물 챙기기", note: "음식, 전자기기 제외\n물, 지갑, 충전기, 우양산, 칫솔, 파우치", minutes: 5 },
           { id: "n7", icon: "🔌", title: "폰 충전 꽂기", note: "침대 밖", minutes: 1 },
+          { id: "n13", icon: "🧘", title: "전신 스트레칭", note: "고양이 자세 8회 │ 네발로 엎드려 등을 둥글게 말았다가 천천히 펴기\n누워서 허리 비틀기 좌우 40초 │ 무릎 세우고 한쪽으로 넘기기, 반대쪽 어깨는 바닥\n허벅지 뒤 늘리기 좌우 40초 │ 누워서 한쪽 다리 들고 허벅지 뒤를 잡아 몸 쪽으로 당기기", minutes: 8 },
           { id: "n8", icon: "🫧", title: "세수하기", note: "", minutes: 2 },
           { id: "n9", icon: "🪥", title: "양치하기", note: "", minutes: 3 },
           { id: "n10", icon: "🧴", title: "로션 바르기", note: "립밤까지", minutes: 1 },
@@ -4527,6 +4544,11 @@
 
     function showReward(mark = "✓", type = "done") {
       if (!els.rewardPop) return;
+      const ringRect = els.timerRing?.getBoundingClientRect();
+      if (ringRect && ringRect.width > 0 && ringRect.height > 0) {
+        els.rewardPop.style.setProperty("--reward-center-x", `${ringRect.left + ringRect.width / 2}px`);
+        els.rewardPop.style.setProperty("--reward-center-y", `${ringRect.top + ringRect.height / 2}px`);
+      }
       els.rewardPop.textContent = mark;
       els.rewardPop.classList.remove("show", "skip");
       if (type === "skipped") els.rewardPop.classList.add("skip");
