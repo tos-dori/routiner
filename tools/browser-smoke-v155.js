@@ -29,6 +29,8 @@ const { chromium } = require('playwright');
     authVisible: document.getElementById('authScreen')?.classList.contains('active') === true
   }));
 
+  console.log(JSON.stringify({ result, pageErrors, badLocalResponses }, null, 2));
+
   if (result.version !== '1.55') throw new Error(`Unexpected version: ${result.version}`);
   if (result.renderHome !== 'function' || result.initFromUrl !== 'function') {
     throw new Error('Cross-file globals are unavailable');
