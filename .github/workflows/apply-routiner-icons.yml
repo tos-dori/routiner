@@ -1,0 +1,212 @@
+name: Apply Routiner icons
+
+on:
+  push:
+    paths:
+      - ".github/workflows/apply-routiner-icons.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply-icons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install renderer
+        run: python -m pip install --disable-pip-version-check pillow
+
+      - name: Generate, verify, and commit icons
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+          from urllib.request import urlopen
+          from statistics import median
+          import hashlib
+          import io
+          import json
+
+          ROOT = Path.cwd()
+          STEP_RAW = "https://raw.githubusercontent.com/tos-dori/step/main/"
+          REF = 512.0
+          REPAIR = (100, 84, 412, 416)
+          LEFT_BAND = (66, 96)
+          RIGHT_BAND = (416, 446)
+          FEATHER = 7
+
+          SVG = '''<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 252 252">
+          <circle cx="76.5" cy="91.5" r="44.0" fill="#8A5148"/><circle cx="76.5" cy="91.5" r="23.5" fill="#D2B7AE"/>
+          <circle cx="119.5" cy="121.5" r="53.2" fill="#939245"/><circle cx="119.5" cy="121.5" r="29.4" fill="#D9D5BF"/>
+          <circle cx="166.5" cy="155.5" r="59.8" fill="#96BED5"/><circle cx="166.5" cy="155.5" r="32.8" fill="#FFFAF2"/>
+          <path d="M 166.500 95.700 A 59.800 59.800 0 1 1 116.749 122.320 L 139.212 137.301 A 32.800 32.800 0 1 0 166.500 122.700 Z" fill="#2389C7"/><circle cx="166.5" cy="155.5" r="32.8" fill="#FFFAF2"/>
+          </svg>'''
+
+          def fetch_png(name):
+              with urlopen(STEP_RAW + name) as response:
+                  return Image.open(io.BytesIO(response.read())).convert("RGBA")
+
+          def smooth_rows(rows, radius):
+              weights = list(range(1, radius + 2)) + list(range(radius, 0, -1))
+              out = []
+              for i in range(len(rows)):
+                  total = [0.0, 0.0, 0.0]
+                  weight_sum = 0
+                  for offset, weight in zip(range(-radius, radius + 1), weights):
+                      j = min(max(i + offset, 0), len(rows) - 1)
+                      for channel in range(3):
+                          total[channel] += rows[j][channel] * weight
+                      weight_sum += weight
+                  out.append(tuple(value / weight_sum for value in total))
+              return out
+
+          def clean_step_background(source):
+              n = source.width
+              assert source.size == (n, n)
+              scale = n / REF
+              x0, y0, x1, y1 = [round(value * scale) for value in REPAIR]
+              lb0, lb1 = [round(value * scale) for value in LEFT_BAND]
+              rb0, rb1 = [round(value * scale) for value in RIGHT_BAND]
+              feather = max(2, round(FEATHER * scale))
+              pixels = source.load()
+
+              rows = []
+              for y in range(y0, y1 + 1):
+                  samples = [pixels[x, y][:3] for x in range(lb0, lb1 + 1)]
+                  samples += [pixels[x, y][:3] for x in range(rb0, rb1 + 1)]
+                  rows.append(tuple(median(sample[channel] for sample in samples) for channel in range(3)))
+              rows = smooth_rows(rows, max(1, round(2 * scale)))
+
+              result = source.copy()
+              target = result.load()
+              for row_index, y in enumerate(range(y0, y1 + 1)):
+                  color = rows[row_index]
+                  for x in range(x0, x1 + 1):
+                      wx = min(1.0, (x - x0 + 1) / feather, (x1 - x + 1) / feather)
+                      wy = min(1.0, (y - y0 + 1) / feather, (y1 - y + 1) / feather)
+                      blend = max(0.0, min(1.0, wx, wy))
+                      old = pixels[x, y]
+                      target[x, y] = tuple(round(old[c] * (1 - blend) + color[c] * blend) for c in range(3)) + (255,)
+
+              # Pixels outside the repair rectangle must remain byte-for-byte identical.
+              original = source.tobytes()
+              repaired = result.tobytes()
+              stride = n * 4
+              for y in range(n):
+                  if y0 <= y <= y1:
+                      left_end = y * stride + x0 * 4
+                      right_start = y * stride + (x1 + 1) * 4
+                      assert original[y * stride:left_end] == repaired[y * stride:left_end]
+                      assert original[right_start:(y + 1) * stride] == repaired[right_start:(y + 1) * stride]
+                  else:
+                      assert original[y * stride:(y + 1) * stride] == repaired[y * stride:(y + 1) * stride]
+
+              dark = 0
+              for y in range(y0, y1 + 1):
+                  for x in range(x0, x1 + 1):
+                      if max(target[x, y][:3]) < 150:
+                          dark += 1
+              assert dark == 0, f"background residual pixels: {dark}"
+              return result
+
+          def render_symbol(size):
+              supersample = 4
+              high = size * supersample
+              canvas = Image.new("RGBA", (high, high), (0, 0, 0, 0))
+              draw = ImageDraw.Draw(canvas)
+              scale = high / 252.0
+
+              def circle(cx, cy, radius, color):
+                  box = ((cx - radius) * scale, (cy - radius) * scale,
+                         (cx + radius) * scale, (cy + radius) * scale)
+                  draw.ellipse(box, fill=color)
+
+              circle(76.5, 91.5, 44.0, "#8A5148")
+              circle(76.5, 91.5, 23.5, "#D2B7AE")
+              circle(119.5, 121.5, 53.2, "#939245")
+              circle(119.5, 121.5, 29.4, "#D9D5BF")
+              circle(166.5, 155.5, 59.8, "#96BED5")
+              circle(166.5, 155.5, 32.8, "#FFFAF2")
+              outer = ((166.5 - 59.8) * scale, (155.5 - 59.8) * scale,
+                       (166.5 + 59.8) * scale, (155.5 + 59.8) * scale)
+              draw.pieslice(outer, start=-90, end=215, fill="#2389C7")
+              circle(166.5, 155.5, 32.8, "#FFFAF2")
+              return canvas.resize((size, size), Image.Resampling.LANCZOS)
+
+          outputs = [
+              ("apple-touch-icon.png", 180),
+              ("icon-192.png", 192),
+              ("icon-512.png", 512),
+          ]
+          report = []
+          for filename, size in outputs:
+              source = fetch_png(filename)
+              assert source.size == (size, size)
+              background = clean_step_background(source)
+              symbol = render_symbol(size)
+              result = background.copy()
+              result.alpha_composite(symbol)
+              result.convert("RGB").save(ROOT / filename, "PNG", optimize=True, compress_level=9)
+              with Image.open(ROOT / filename) as check:
+                  check.verify()
+              with Image.open(ROOT / filename) as check:
+                  assert check.size == (size, size)
+              digest = hashlib.sha256((ROOT / filename).read_bytes()).hexdigest()
+              report.append(f"{filename}: {size}x{size}, sha256={digest}")
+
+          (ROOT / "routiner-icon.svg").write_text(SVG, encoding="utf-8")
+          transparent = render_symbol(512)
+          transparent.save(ROOT / "routiner-icon-transparent.png", "PNG", optimize=True, compress_level=9)
+          icon64 = render_symbol(64)
+          icon64.save(ROOT / "favicon.ico", "ICO", sizes=[(64, 64), (48, 48), (32, 32), (16, 16)])
+
+          manifest_path = ROOT / "manifest.webmanifest"
+          manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+          manifest["icons"] = [
+              {"src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+              {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+          ]
+          manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          index_path = ROOT / "index.html"
+          index = index_path.read_text(encoding="utf-8")
+          old = '  <link rel="manifest" href="./manifest.webmanifest" />\n'
+          new = (
+              '  <link rel="icon" type="image/svg+xml" href="./routiner-icon.svg?v=20260716" />\n'
+              '  <link rel="icon" type="image/x-icon" href="./favicon.ico?v=20260716" />\n'
+              '  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png?v=20260716" />\n'
+              '  <link rel="manifest" href="./manifest.webmanifest?v=20260716" />\n'
+          )
+          assert old in index
+          index = index.replace(old, new, 1)
+          index_path.write_text(index, encoding="utf-8")
+
+          for required in ["apple-touch-icon.png", "icon-192.png", "icon-512.png", "routiner-icon.svg", "routiner-icon-transparent.png", "favicon.ico"]:
+              assert (ROOT / required).is_file() and (ROOT / required).stat().st_size > 0
+          assert "apple-touch-icon.png?v=20260716" in index
+          assert manifest["icons"][1]["sizes"] == "512x512"
+          (ROOT / "ICON_VERIFICATION.txt").write_text(
+              "Routiner icon deployment verification\n"
+              "Method: Pillow fixed geometry; no generative image tool.\n"
+              "Source background: tos-dori/step size-matched PNG files.\n"
+              "Background residual dark pixels in repaired region: 0.\n"
+              + "\n".join(report) + "\n",
+              encoding="utf-8",
+          )
+          print("\n".join(report))
+          PY
+
+          rm -f .github/workflows/apply-routiner-icons.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html manifest.webmanifest apple-touch-icon.png icon-192.png icon-512.png routiner-icon.svg routiner-icon-transparent.png favicon.ico ICON_VERIFICATION.txt .github/workflows/apply-routiner-icons.yml
+          git commit -m "Apply Routiner app icons"
+          git push origin HEAD:main
