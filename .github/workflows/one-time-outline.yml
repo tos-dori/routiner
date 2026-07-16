@@ -1,16 +1,17 @@
 name: One-time app outline
 
 on:
-  issues:
-    types: [opened]
+  push:
+    branches:
+      - codex/modular-architecture-v1-55
+    paths:
+      - .github/workflows/one-time-outline.yml
 
 permissions:
   contents: write
-  issues: read
 
 jobs:
   outline:
-    if: github.actor == 'tos-dori' && github.event.issue.title == '[internal] Routiner architecture outline v1.55'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
