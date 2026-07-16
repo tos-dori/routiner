@@ -1,0 +1,65 @@
+name: One-time app outline
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  outline:
+    if: github.actor == 'tos-dori' && github.event.issue.title == '[internal] Routiner architecture outline v1.55'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/modular-architecture-v1-55
+          fetch-depth: 0
+
+      - name: Build top-level outline
+        shell: bash
+        run: |
+          npm install --no-save acorn@8 >/dev/null 2>&1
+          node <<'NODE'
+          const fs = require('fs');
+          const acorn = require('acorn');
+          const source = fs.readFileSync('app.js', 'utf8');
+          const ast = acorn.parse(source, {
+            ecmaVersion: 'latest',
+            sourceType: 'script',
+            locations: true,
+            allowAwaitOutsideFunction: true
+          });
+
+          function namesOf(node) {
+            if (node.type === 'FunctionDeclaration') return [node.id?.name || '(anonymous)'];
+            if (node.type === 'ClassDeclaration') return [node.id?.name || '(anonymous class)'];
+            if (node.type === 'VariableDeclaration') {
+              return node.declarations.map((decl) => {
+                if (decl.id.type === 'Identifier') return decl.id.name;
+                return source.slice(decl.id.start, decl.id.end).replace(/\s+/g, ' ');
+              });
+            }
+            if (node.type === 'ExpressionStatement') {
+              return [source.slice(node.start, Math.min(node.end, node.start + 90)).replace(/\s+/g, ' ')];
+            }
+            return [''];
+          }
+
+          const lines = ast.body.map((node, index) => {
+            const names = namesOf(node).join(', ');
+            return `${String(index + 1).padStart(3, '0')} | ${String(node.loc.start.line).padStart(4, ' ')}-${String(node.loc.end.line).padEnd(4, ' ')} | ${node.type.padEnd(22, ' ')} | ${names}`;
+          });
+          fs.writeFileSync('ARCHITECTURE_OUTLINE.txt', lines.join('\n') + '\n');
+          NODE
+
+      - name: Commit outline
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ARCHITECTURE_OUTLINE.txt
+          git commit -m "Add temporary app architecture outline"
+          git push origin HEAD:codex/modular-architecture-v1-55
