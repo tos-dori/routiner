@@ -1,0 +1,11 @@
+{
+  "name": "Routiner",
+  "short_name": "Routiner",
+  "description": "개인 루틴 플레이어.",
+  "id": "./",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#dff4ff",
+  "theme_color": "#dff4ff",
+  "orientation": "portrait-primary"
+}
