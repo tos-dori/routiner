@@ -1,0 +1,42 @@
+name: One-time Routiner modular PR v1.55
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.head_ref == 'codex/modular-architecture-v1-55'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/modular-architecture-v1-55
+          fetch-depth: 0
+
+      - name: Run validated modular refactor
+        shell: bash
+        run: |
+          if [ ! -f tools/run-refactor-v155.sh ]; then
+            echo 'Refactor already applied; nothing to run.'
+            exit 0
+          fi
+          bash tools/run-refactor-v155.sh
+
+      - name: Commit modular architecture
+        shell: bash
+        run: |
+          if git diff --quiet && git diff --cached --quiet && [ -z "$(git status --porcelain)" ]; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Refactor Routiner into maintainable modules"
+          git push origin HEAD:codex/modular-architecture-v1-55
