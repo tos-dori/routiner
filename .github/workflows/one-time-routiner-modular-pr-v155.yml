@@ -19,22 +19,67 @@ jobs:
           ref: codex/modular-architecture-v1-55
           fetch-depth: 0
 
-      - name: Run validated modular refactor
+      - name: Check whether refactor is pending
+        id: gate
         shell: bash
         run: |
-          if [ ! -f tools/run-refactor-v155.sh ]; then
+          if [ -f tools/refactor-v155.js ]; then
+            echo 'needed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'needed=false' >> "$GITHUB_OUTPUT"
             echo 'Refactor already applied; nothing to run.'
-            exit 0
           fi
-          bash tools/run-refactor-v155.sh
+
+      - name: Install AST tools
+        if: steps.gate.outputs.needed == 'true'
+        run: npm install --no-save acorn@8 playwright@1.52.0
+
+      - name: Generate modular source files
+        if: steps.gate.outputs.needed == 'true'
+        run: node tools/refactor-v155.js
+
+      - name: Validate source structure
+        if: steps.gate.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          find src -name '*.js' -print0 | xargs -0 -n1 node --check
+          test -f styles/app.css
+          test -f src/data/default-routines.js
+          test ! -e app.js
+          test ! -e styles.css
+          test ! -e ARCHITECTURE_OUTLINE.txt
+          test ! -e .github/workflows/one-time-outline.yml
+          test "$(grep -c 'src/app.js' index.html)" -eq 1
+          test "$(grep -c 'styles/app.css' index.html)" -eq 1
+          test "$(grep -R -l 'personal_routine_v01' src | wc -l | tr -d ' ')" -eq 1
+          python3 -m json.tool manifest.webmanifest >/dev/null
+
+      - name: Install preview browser
+        if: steps.gate.outputs.needed == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run 390x844 browser smoke test
+        if: steps.gate.outputs.needed == 'true'
+        shell: bash
+        run: |
+          python3 -m http.server 4173 >/tmp/routiner-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+          node tools/browser-smoke-v155.js
+
+      - name: Remove temporary refactor tools
+        if: steps.gate.outputs.needed == 'true'
+        shell: bash
+        run: |
+          rm -rf node_modules package-lock.json
+          rm -f tools/refactor-v155.js tools/browser-smoke-v155.js tools/run-refactor-v155.sh
+          rmdir tools 2>/dev/null || true
 
       - name: Commit modular architecture
+        if: steps.gate.outputs.needed == 'true'
         shell: bash
         run: |
-          if git diff --quiet && git diff --cached --quiet && [ -z "$(git status --porcelain)" ]; then
-            echo 'No changes to commit.'
-            exit 0
-          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
