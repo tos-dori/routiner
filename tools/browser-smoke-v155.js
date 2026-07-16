@@ -1,5 +1,4 @@
 const { chromium } = require('playwright');
-// PR diagnostic retry
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -21,14 +20,20 @@ const { chromium } = require('playwright');
     { timeout: 20000 }
   );
 
-  const result = await page.evaluate(() => ({
-    version: APP_VERSION,
-    renderHome: typeof renderHome,
-    initFromUrl: typeof initFromUrl,
-    moduleCount: document.querySelectorAll('script[data-routiner-module]').length,
-    stylesheetLoaded: Array.from(document.styleSheets).some((sheet) => sheet.href?.endsWith('/styles/app.css')),
-    authVisible: document.getElementById('authScreen')?.classList.contains('active') === true
-  }));
+  const result = await page.evaluate(() => {
+    const activeScreens = Array.from(document.querySelectorAll(
+      '.auth-screen.active, .home.active, .run.active, .done-screen.active, .edit-screen.active'
+    )).map((element) => element.id);
+
+    return {
+      version: APP_VERSION,
+      renderHome: typeof renderHome,
+      initFromUrl: typeof initFromUrl,
+      moduleCount: document.querySelectorAll('script[data-routiner-module]').length,
+      stylesheetLoaded: Array.from(document.styleSheets).some((sheet) => sheet.href?.endsWith('/styles/app.css')),
+      activeScreens
+    };
+  });
 
   console.log(JSON.stringify({ result, pageErrors, badLocalResponses }, null, 2));
 
@@ -38,7 +43,9 @@ const { chromium } = require('playwright');
   }
   if (result.moduleCount !== 17) throw new Error(`Unexpected module count: ${result.moduleCount}`);
   if (!result.stylesheetLoaded) throw new Error('styles/app.css was not loaded');
-  if (!result.authVisible) throw new Error('Initial auth screen is not visible');
+  if (result.activeScreens.length !== 1) {
+    throw new Error(`Expected exactly one active main screen, got: ${result.activeScreens.join(', ') || 'none'}`);
+  }
   if (badLocalResponses.length) throw new Error(`Local resource errors: ${badLocalResponses.join(', ')}`);
 
   const fatalErrors = pageErrors.filter((message) => /ReferenceError|SyntaxError/.test(message));
