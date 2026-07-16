@@ -1,0 +1,7 @@
+Routiner icon deployment verification
+Method: Pillow fixed geometry; no generative image tool.
+Source background: tos-dori/step size-matched PNG files.
+Background residual dark pixels in repaired region: 0.
+apple-touch-icon.png: 180x180, sha256=6e4bb954ca7c1b0133f59c3a96363fec2f96fca36b92f0a68d452b3805eeecb6
+icon-192.png: 192x192, sha256=bd3dbba502d6380404fbc8bd14dedbc94e352a6f498456dc771bc65526840ae6
+icon-512.png: 512x512, sha256=a28b6c4747aa2526186f2e023f6f45ac30edba9f4fc5246097182f34fbcb037a
