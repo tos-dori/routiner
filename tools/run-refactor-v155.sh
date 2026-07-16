@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# PR workflow trigger
 
 npm install --no-save acorn@8 playwright@1.52.0 >/dev/null 2>&1
 node tools/refactor-v155.js
