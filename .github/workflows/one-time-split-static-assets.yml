@@ -1,24 +1,24 @@
 name: One-time split static assets
 
 on:
-  issues:
-    types: [opened]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main]
 
 permissions:
   contents: write
-  issues: read
 
 jobs:
   split:
-    if: github.actor == 'tos-dori' && github.event.issue.title == '[internal] Split static assets v1.54'
+    if: github.event.pull_request.head.ref == 'codex/split-static-assets-v1-54-final'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: codex/split-static-assets-v1-54
+          ref: codex/split-static-assets-v1-54-final
           fetch-depth: 0
 
-      - name: Split index.html
+      - name: Split exact v1.53 source
         shell: bash
         run: |
           python3 - <<'PY'
@@ -36,8 +36,8 @@ jobs:
           if blob_sha != expected_sha:
               raise SystemExit(f"Unexpected index.html source: {blob_sha}")
 
-          scripts = list(re.finditer(r"<script(?:\\s[^>]*)?>[\\s\\S]*?</script>", html_source, flags=re.I))
-          styles = list(re.finditer(r"<style(?:\\s[^>]*)?>[\\s\\S]*?</style>", html_source, flags=re.I))
+          scripts = list(re.finditer(r"<script(?:\s[^>]*)?>[\s\S]*?</script>", html_source, flags=re.I))
+          styles = list(re.finditer(r"<style(?:\s[^>]*)?>[\s\S]*?</style>", html_source, flags=re.I))
           if len(scripts) != 2 or len(styles) != 1:
               raise SystemExit(f"Unexpected inline blocks: scripts={len(scripts)}, styles={len(styles)}")
 
@@ -45,8 +45,8 @@ jobs:
           app_block = scripts[1].group(0)
           style_block = styles[0].group(0)
 
-          css = re.sub(r"^<style(?:\\s[^>]*)?>\\s*|\\s*</style>$", "", style_block, flags=re.I)
-          js = re.sub(r"^<script(?:\\s[^>]*)?>\\s*|\\s*</script>$", "", app_block, flags=re.I)
+          css = re.sub(r"^<style(?:\s[^>]*)?>\s*|\s*</style>$", "", style_block, flags=re.I)
+          js = re.sub(r"^<script(?:\s[^>]*)?>\s*|\s*</script>$", "", app_block, flags=re.I)
           css = textwrap.dedent(css).strip() + "\n"
           js = textwrap.dedent(js).strip() + "\n"
 
@@ -64,7 +64,7 @@ jobs:
               "display": "standalone",
               "background_color": "#dff4ff",
               "theme_color": "#dff4ff",
-              "orientation": "portrait-primary",
+              "orientation": "portrait-primary"
           }
 
           index = html_source
@@ -76,7 +76,7 @@ jobs:
 
           if "<style" in index.lower():
               raise SystemExit("Inline style block remains")
-          if re.search(r"<script(?![^>]*\\bsrc=)", index, flags=re.I):
+          if re.search(r"<script(?![^>]*\bsrc=)", index, flags=re.I):
               raise SystemExit("Inline script block remains")
           if "personal_routine_v01" in index or "personal_routine_v01" not in js:
               raise SystemExit("Storage code was not isolated correctly")
@@ -85,6 +85,8 @@ jobs:
           Path("styles.css").write_text(css, encoding="utf-8")
           Path("app.js").write_text(js, encoding="utf-8")
           Path("manifest.webmanifest").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          Path(".split-static-assets-trigger").unlink(missing_ok=True)
+          Path(".github/workflows/one-time-split-static-assets.yml").unlink(missing_ok=True)
           PY
 
       - name: Validate split files
@@ -94,13 +96,14 @@ jobs:
           test "$(grep -c '<link rel="stylesheet"' index.html)" -eq 1
           test "$(grep -c '<script src="./app.js?v=1.54"></script>' index.html)" -eq 1
           test "$(grep -c '<link rel="manifest"' index.html)" -eq 1
+          test "$(grep -c '<style' index.html || true)" -eq 0
           python3 -m json.tool manifest.webmanifest >/dev/null
 
-      - name: Commit split files
+      - name: Commit verified split
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html styles.css app.js manifest.webmanifest
+          git add -A
           git commit -m "Split inline assets into standalone files"
-          git push origin HEAD:codex/split-static-assets-v1-54
+          git push origin HEAD:codex/split-static-assets-v1-54-final
