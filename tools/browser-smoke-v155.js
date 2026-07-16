@@ -1,4 +1,5 @@
 const { chromium } = require('playwright');
+// PR diagnostic retry
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
