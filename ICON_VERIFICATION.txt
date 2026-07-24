@@ -1,7 +1,9 @@
-Routiner icon deployment verification
+Routiner icon B deployment verification
 Method: Pillow fixed geometry; no generative image tool.
-Source background: tos-dori/step size-matched PNG files.
+Only geometry change: lunch center (119.5,121.5) -> (121.5,123.5).
+Center distances: 55.217751, 55.217751; collinear=true.
+Colors, radii, draw order, progress angle, Step background and edge treatment unchanged.
 Background residual dark pixels in repaired region: 0.
-apple-touch-icon.png: 180x180, sha256=6e4bb954ca7c1b0133f59c3a96363fec2f96fca36b92f0a68d452b3805eeecb6
-icon-192.png: 192x192, sha256=bd3dbba502d6380404fbc8bd14dedbc94e352a6f498456dc771bc65526840ae6
-icon-512.png: 512x512, sha256=a28b6c4747aa2526186f2e023f6f45ac30edba9f4fc5246097182f34fbcb037a
+apple-touch-icon.png: 180x180, sha256=9029b4549f2961ae69e32d20f10a4e97ab29cf1fa1f55569c4313b93f2f2e565
+icon-192.png: 192x192, sha256=38d150ffd745cd13db3dcac042088c25baef4d26fe4e05ed8dae3a1e60df7e20
+icon-512.png: 512x512, sha256=2182c3eefe85b188f47e8a8d12482351b27077e21d4ea9dff9af1cc7d3984d63
