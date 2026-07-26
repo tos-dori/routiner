@@ -42,6 +42,9 @@ Routiner는 외부 강제력이 약한 날에도 출근·복귀·종료 루틴�
 - 제품 코드 기준 커밋: `66a568cc888c7bb6c74f15c95fa85cf0730a3cd7` (`Use size-specific Routiner favicons`).
 - 브라우저 favicon은 검증된 `favicon-16.png`, `favicon-32.png`와 다중 크기 `favicon.ico`를 사용하도록 `index.html`에 연결되어 있다.
 - 앱 아이콘 asset은 PWA·홈 화면·브라우저용이며, 현재 인앱 본문에는 브랜드 앱 아이콘을 표시하지 않는다. 인앱에는 루틴·단계·조작용 아이콘이 사용된다.
+- Firestore 동기화는 로컬 클라이언트 시각의 `updatedAt`을 기준으로 전체 cloud state 중 한쪽을 선택해 덮어쓰는 last-write-wins 구조다.
+- 로컬 저장 문자열이 손상돼도 `loadState()`는 기본 state로 조용히 대체하며, 저장 키가 존재하면 그 기본 state에 새 `updatedAt`을 부여해 기존 cloud state를 덮어쓸 수 있는 데이터 소실 경로가 코드상 확인됐다.
+- 현재 Firestore `main` 문서는 `setDoc`으로 교체되며 자동 cloud version history는 없다. 수동 JSON 백업 기능만 존재한다.
 
 ## 결정된 방향
 
@@ -57,14 +60,20 @@ Routiner는 외부 강제력이 약한 날에도 출근·복귀·종료 루틴�
 - 16px·32px 전용 PNG와 다중 크기 ICO를 검증하고 브라우저 favicon 링크를 크기별 asset으로 전환했다.
 - 이 파일을 공식 프로젝트 연속성 원본으로 도입했고, 이후 동시 작업의 최신 변경을 이 snapshot에 reconciliation했다.
 - 2026-07-25 새 채팅에서 `@GitHub 토스 루티너 현재 상태 확인하기` 호출로 공통 진입점→프로젝트 registry→이 파일→실제 `main` 상태를 복구했고, 같은 세션의 자동 checkpoint 경로까지 확인했다.
+- Step 할 일 소실 조사와 함께 Routiner 저장·동기화 코드를 검토해, 손상된 local state나 잘못된 최신성 판정이 정상 cloud state를 덮을 수 있는 별도 위험을 확인했다.
 
 ## 현재 미해결·미확인
 
+- Routiner에서 실제 데이터 소실이 발생한 사례는 현재 확인되지 않았다.
+- 현재 동기화는 client clock과 전체 state 덮어쓰기에 의존하며, 양쪽 기기에서 동시에 수정했을 때의 충돌 보존과 자동 복구 이력이 없다.
+- 손상 local, local/cloud 동시 수정, 빈 state, reset·import·migration에 대한 데이터 보존 자동 테스트가 없다.
+- 공통 데이터 안전 계약과 제품 패치는 아직 확정·수행되지 않았다.
 - favicon 파일과 링크 검증은 완료됐지만 실제 브라우저 캐시·홈 화면에서의 사용자 시각 검증은 이 파일 기준 미확인이다.
-- 현재 특정 제품 패치가 진행 중이라고 확정할 근거는 없다.
 
 ## 다음 시작점
 
-1. favicon 결과를 실제 브라우저·홈 화면에서 확인할 필요가 있으면 캐시 조건을 포함해 검증한다.
-2. 다음 제품 작업에서는 현재 요청에 맞는 담당 파일과 최신 SHA를 읽고 최소 범위로 패치한다.
-3. 검증된 상태 변화가 생기면 이 파일의 관련 섹션만 최소 갱신한다.
+1. Step과 Routiner에 공통 적용할 데이터 안전 계약과 앱별 patch ticket 범위를 확정한다.
+2. 손상된 local state가 cloud write 후보가 되지 않게 하고, remote 적용·cloud 교체 전 복구 snapshot을 남기는 최소 패치를 설계한다.
+3. client timestamp만으로 승자를 정하지 않고 마지막 동기화 기준 revision/hash로 단독 변경과 양쪽 변경을 구분하는 동기화 방식을 검토한다.
+4. 손상 local, local non-empty/remote empty, local empty/remote non-empty, 양쪽 수정, reset·import·migration 회귀 테스트를 추가한다.
+5. 관련 모바일 흐름과 복구 절차를 검증한 뒤 검증된 상태 변화만 최소 checkpoint한다.
