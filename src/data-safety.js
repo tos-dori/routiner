@@ -5,6 +5,7 @@
   const LAST_ARCHIVE_KEY = `${STORAGE_KEY}__lastArchiveAt`;
   const PRIVATE_DEFAULTS_DOC_ID = "private-defaults";
   const MAX_LOCAL_SNAPSHOTS = 20;
+  const MAX_CLOUD_SNAPSHOTS = 30;
   const firestoreModulePromise = import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore.js`);
 
   let blocked = false;
@@ -139,7 +140,8 @@
     return true;
   }
   function cloudHistoryRef(revision){
-    const id=`${String(revision||0)}-${cloudSync.deviceId.replace(/[^a-zA-Z0-9]/g,"").slice(0,10)}-${Date.now()}`;
+    const slot=Math.abs(Number(revision)||0)%MAX_CLOUD_SNAPSHOTS;
+    const id=`slot-${String(slot).padStart(2,"0")}`;
     return cloudSync.api.doc(cloudSync.db,"users",cloudSync.user.uid,"routiner",FIRESTORE_DOC_ID,"history",id);
   }
   function currentCloudRevision(payload){return Number(payload?.revision||0)}
