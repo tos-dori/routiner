@@ -1,15 +1,22 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedInAs(uid) {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    function isAllowedRoutinerDocument(documentId) {
+      return documentId == "main" || documentId == "private-defaults";
+    }
+
     match /users/{uid}/routiner/{documentId} {
-      allow read, write: if signedInAs(uid);
+      allow read, write: if signedInAs(uid) && isAllowedRoutinerDocument(documentId);
 
       match /history/{historyId} {
-        allow read, write: if signedInAs(uid);
+        allow read, write: if signedInAs(uid)
+          && documentId == "main"
+          && historyId.matches('slot-[0-2][0-9]');
       }
     }
 
