@@ -14,6 +14,7 @@
   "runner.js",
   "editor.js",
   "feedback.js",
+  "data-safety.js",
   "runtime.js",
   "scroll.js",
   "backup.js",
