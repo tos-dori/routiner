@@ -39,12 +39,16 @@ async function exportBackupToClipboard() {
 function importBackupFromInput() {
       const parsed = parseBackupText(els.backupInput.value);
       if (!parsed) return;
+      if (window.RoutinerDataSafety) {
+        window.RoutinerDataSafety.snapshotCurrent("before-backup-import");
+        window.RoutinerDataSafety.markOperation("import-backup");
+      }
       state = parsed.nextState;
       selectedDateKey = todayKey();
       isDatePlanMode = false;
       activeRoutineId = null;
       editRoutineId = state.routines[0]?.id || "morning";
-      saveState();
+      saveState({ reason: "import-backup" });
       clearBackupInput();
       setBackupPanelOpen(false);
       renderHome();
