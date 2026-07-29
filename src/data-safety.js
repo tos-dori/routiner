@@ -12,9 +12,7 @@
   let privateDefaults=null;
 
   const originalNormalizeLoadedState=normalizeLoadedState;
-  const originalLoadState=loadState;
   const originalWriteStoredState=writeStoredState;
-  const originalDefaultById=defaultById;
 
   function safeGet(key){try{return localStorage.getItem(key)}catch{return null}}
   function safeSet(key,value){try{localStorage.setItem(key,value);return true}catch{return false}}
@@ -96,13 +94,34 @@
   }
   function cloudStateSafe(value){try{validateParsed(value);return byteLength(JSON.stringify(value))<=MAX_CLOUD_BYTES}catch{return false}}
   function cloudSize(value){try{return byteLength(JSON.stringify(value))}catch{return Infinity}}
-  function setPrivateDefaults(routines){if(Array.isArray(routines)&&routines.length)privateDefaults=clone(routines)}
-  function privateDefaultById(id){if(!Array.isArray(privateDefaults))return null;return privateDefaults.find((routine)=>routine.id===id)||privateDefaults[0]||null}
+  function privateDefaultsReady(){return Array.isArray(privateDefaults)&&privateDefaults.length>0}
+  function privateDefaultById(id){if(!privateDefaultsReady())return null;return privateDefaults.find((routine)=>routine.id===id)||privateDefaults[0]||null}
+  function bootstrapPending(){
+    try{return isPrivateDefaultsBootstrapRoutines(state?.routines)}catch{return false}
+  }
+  function hydrateBootstrapState(){
+    if(!privateDefaultsReady()||!bootstrapPending())return false;
+    const previous=clone(state);
+    state={...state,routines:clone(privateDefaults),routineSchema:ROUTINE_SCHEMA_VERSION};
+    const ok=write(state,{touch:false,cloud:false,reason:"private-defaults-hydrate"},originalWriteStoredState);
+    if(!ok){state=previous;issue=issue||"비공개 기본값을 기기에 저장하지 못했어.";return false}
+    try{
+      editRoutineId=state.routines[0]?.id||"morning";
+      editStepId=null;
+      renderHome();
+    }catch{}
+    return true;
+  }
+  function setPrivateDefaults(routines){
+    try{validateParsed({routines});privateDefaults=clone(routines)}catch{privateDefaults=null;return false}
+    hydrateBootstrapState();
+    return true;
+  }
 
   normalizeLoadedState=function(parsed){return safeNormalize(parsed)};
   loadState=function(){return load(safeGet(STORAGE_KEY),defaultState)};
   writeStoredState=function(targetState,options={}){return write(targetState,options,originalWriteStoredState)};
-  defaultById=function(id){return privateDefaultById(id)||originalDefaultById(id)};
+  defaultById=function(id){return privateDefaultById(id)};
 
   window.RoutinerDataSafety={
     checkpointCurrent,
@@ -114,8 +133,10 @@
     cloudSize,
     maxCloudBytes:MAX_CLOUD_BYTES,
     setPrivateDefaults,
-    privateDefaultsReady:()=>Array.isArray(privateDefaults)&&privateDefaults.length>0,
+    privateDefaultsReady,
     defaultById:privateDefaultById,
+    bootstrapPending,
+    hydrateBootstrapState,
     validateParsed
   };
 })();
