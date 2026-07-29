@@ -8,6 +8,9 @@
   "state-model.js",
   "storage.js",
   "sync.js",
+  "sync-v2.js",
+  "data-safety.js",
+  "private-data-maintenance.js",
   "session.js",
   "ui.js",
   "calendar.js",
@@ -17,6 +20,7 @@
   "runtime.js",
   "scroll.js",
   "backup.js",
+  "data-safety-hooks.js",
   "events.js",
   "bootstrap.js"
 ];
