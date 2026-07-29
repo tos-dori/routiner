@@ -6,15 +6,25 @@
   let cloudItems=[];
 
   performResetCurrentRoutineToDefault=function(){
-    window.RoutinerDataSafety?.checkpointCurrent("reset-default-routine",true);
+    const before=clone(state);
+    if(!window.RoutinerDataSafety?.checkpointCurrent("reset-default-routine",true)){showToast("복구본을 남기지 못해 재설정을 중단했어");return}
     window.RoutinerSyncV2?.markOperation("reset-default-routine");
-    return originalReset();
+    const result=originalReset();
+    if(!window.RoutinerDataSafety?.isSafe()){
+      state=before;renderEditor();showToast("저장 실패로 재설정을 되돌렸어");return;
+    }
+    return result;
   };
 
   importBackupFromInput=function(){
-    window.RoutinerDataSafety?.checkpointCurrent("import-backup",true);
+    const before=clone(state);
+    if(!window.RoutinerDataSafety?.checkpointCurrent("import-backup",true)){showToast("복구본을 남기지 못해 가져오기를 중단했어");return}
     window.RoutinerSyncV2?.markOperation("import-backup");
-    return originalImport();
+    const result=originalImport();
+    if(!window.RoutinerDataSafety?.isSafe()){
+      state=before;renderHome();showToast("저장 실패로 가져오기를 되돌렸어");return;
+    }
+    return result;
   };
 
   setBackupPanelOpen=function(open){
@@ -46,7 +56,8 @@
       try{
         const restored=window.RoutinerDataSafety.restoreLocal(Number(slot));
         state=normalizeLoadedState(restored);selectedDateKey=todayKey();isDatePlanMode=false;activeRoutineId=null;editRoutineId=state.routines[0]?.id||"morning";
-        saveState({reason:"restore-local"});renderHome();window.RoutinerSyncV2?.markOperation("restore-local");await window.RoutinerSyncV2?.safeWriteCloud(true,"restore-local");showToast("기기 복구본 복원됨");renderRecoveryPanel();
+        if(saveState({reason:"restore-local"})===false)throw new Error("restore-save-failed");
+        renderHome();window.RoutinerSyncV2?.markOperation("restore-local");await window.RoutinerSyncV2?.safeWriteCloud(true,"restore-local");showToast("기기 복구본 복원됨");renderRecoveryPanel();
       }catch(error){console.warn("Routiner local restore failed",error);showToast("기기 복구 실패")}
       return;
     }
