@@ -30,6 +30,7 @@ jobs:
           test -f src/data-safety-hooks.js
           test -f src/sync-v2.js
           test -f src/private-data-maintenance.js
+          test -f styles/button-system.css
           test -f firestore.rules
           test -f firebase.json
           test -f DATA_SAFETY.md
@@ -37,6 +38,7 @@ jobs:
           grep -q 'sync-v2.js' src/app.js
           grep -q 'private-data-maintenance.js' src/app.js
           grep -q 'data-safety-hooks.js' src/app.js
+          grep -q 'button-system.css' src/app.js
           grep -q 'HISTORY_SLOTS=50' src/sync-v2.js
           grep -q 'MAX_CONFLICT_COPIES=20' src/private-data-maintenance.js
           grep -q 'getDocFromServer' src/private-data-maintenance.js
@@ -56,13 +58,16 @@ jobs:
       - name: Test privacy phase 2
         run: node tests/privacy-phase2.mjs
 
+      - name: Test compact button system
+        run: node tests/button-system.mjs
+
       - name: Test Firestore rules in emulator
         run: npm run test:rules
 
       - name: Install browser
         run: npx playwright install --with-deps chromium >/dev/null 2>&1
 
-      - name: Run 390x844 migration and recovery test
+      - name: Run 390x844 migration, recovery and UI test
         shell: bash
         run: |
           set -o pipefail
@@ -79,5 +84,5 @@ jobs:
           path: |
             /tmp/routiner-smoke.log
             /tmp/routiner-http.log
-            /tmp/routiner-v157-smoke.png
+            /tmp/routiner-v158-smoke.png
           if-no-files-found: ignore
