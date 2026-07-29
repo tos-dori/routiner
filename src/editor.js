@@ -62,20 +62,22 @@ function renderEditor() {
               <input class="field short" data-field="icon" data-index="${idx}" maxlength="4" value="${escapeAttr(step.icon || "")}" placeholder="아이콘" autocomplete="off" autocorrect="off" spellcheck="false" />
               <input class="field" data-field="title" data-index="${idx}" value="${escapeAttr(step.title)}" placeholder="단계 제목" autocomplete="off" />
             </div>
-            <div class="duration-control">
-              <button class="duration-btn minute-adjust" data-action="adjust-time" data-index="${idx}" data-delta="-60" type="button">−1분</button>
-              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="-15" type="button">−15초</button>
-              <div class="duration-value">${formatDuration(minutesToSeconds(step.minutes))}</div>
-              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="15" type="button">+15초</button>
-              <button class="duration-btn minute-adjust" data-action="adjust-time" data-index="${idx}" data-delta="60" type="button">+1분</button>
+            <div class="duration-control" role="group" aria-label="단계 시간 조절">
+              <button class="duration-btn minute-adjust" data-action="adjust-time" data-index="${idx}" data-delta="-60" type="button" aria-label="1분 줄이기">−1m</button>
+              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="-15" type="button" aria-label="15초 줄이기">−15s</button>
+              <div class="duration-value" aria-label="현재 단계 시간">${formatDuration(minutesToSeconds(step.minutes))}</div>
+              <button class="duration-btn" data-action="adjust-time" data-index="${idx}" data-delta="15" type="button" aria-label="15초 늘리기">+15s</button>
+              <button class="duration-btn minute-adjust" data-action="adjust-time" data-index="${idx}" data-delta="60" type="button" aria-label="1분 늘리기">+1m</button>
             </div>
             <div class="memo-wrap ${hasNote ? "has-note" : "no-note"}">
               <textarea class="edit-textarea" rows="2" data-field="note" data-index="${idx}" placeholder="메모" autocomplete="off">${escapeHtml(step.note || "")}</textarea>
               <button class="clear-memo" data-action="clear-note" data-index="${idx}" type="button" aria-label="메모 지우기">×</button>
             </div>
             <div class="step-controls">
-              <button class="icon-btn" data-action="step-up" data-index="${idx}" type="button">위</button>
-              <button class="icon-btn" data-action="step-down" data-index="${idx}" type="button">아래</button>
+              <div class="step-order-controls" role="group" aria-label="단계 순서">
+                <button class="icon-btn" data-action="step-up" data-index="${idx}" type="button" aria-label="위로 이동">↑</button>
+                <button class="icon-btn" data-action="step-down" data-index="${idx}" type="button" aria-label="아래로 이동">↓</button>
+              </div>
               <button class="icon-btn danger" data-action="step-delete" data-index="${idx}" type="button">삭제</button>
             </div>
           </div>
