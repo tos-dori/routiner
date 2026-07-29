@@ -18,7 +18,6 @@
   function writeProfile(hash,revision){if(!cloudSync.user)return;baseHash=String(hash||"");baseRevision=Number(revision||0);try{localStorage.setItem(PROFILE_KEY,JSON.stringify({uid:cloudSync.user.uid,hash:baseHash,revision:baseRevision,linkedAt:Date.now()}))}catch{}}
   function operationPriority(value){return EXPLICIT_OPERATIONS.includes(value)?2:value&&value!=="local-change"&&value!=="boot"?1:0}
   function markOperation(value){value=String(value||"local-change");if(operationPriority(value)>=operationPriority(pendingOperation))pendingOperation=value}
-  function explicitOperation(value){return EXPLICIT_OPERATIONS.includes(String(value||""))}
   function safeLocal(){
     if(window.RoutinerDataSafety&&!window.RoutinerDataSafety.isSafe()){showToast(window.RoutinerDataSafety.issue()||"로컬 복구 필요");return false}
     const slice=cloudStateSlice(state);
@@ -30,9 +29,9 @@
   function historyRef(revision){const slot=Math.abs(Number(revision)||0)%HISTORY_SLOTS;return cloudSync.api.doc(cloudSync.db,"users",cloudSync.user.uid,"routiner",FIRESTORE_DOC_ID,"history",`slot-${String(slot).padStart(2,"0")}`)}
   function conflictRef(){return cloudSync.api.doc(cloudSync.db,"users",cloudSync.user.uid,"routiner",FIRESTORE_DOC_ID,"conflicts",clientId)}
   function privateDefaultsRef(){return cloudSync.api.doc(cloudSync.db,"users",cloudSync.user.uid,"routiner","private-defaults")}
-  function mainPayload(targetState,revision,operation){
+  function mainPayload(targetState,revision,operation,activeRunValue=cloudSync.activeRun,activeRunUpdatedValue=cloudSync.activeRunUpdatedAt){
     const slice=cloudStateSlice(targetState),hash=hashText(JSON.stringify(slice));
-    return{tag:FIRESTORE_TAG,app:"routiner",schema:FIRESTORE_SCHEMA,storageKey:STORAGE_KEY,appVersion:APP_VERSION,dayStartHour:DAY_START_HOUR,updatedAt:Date.now(),serverUpdatedAt:cloudSync.api.serverTimestamp(),updatedBy:clientId,activeRun:clone(cloudSync.activeRun||null),activeRunUpdatedAt:Number(cloudSync.activeRunUpdatedAt||0),state:slice,stateHash:hash,revision:Number(revision||0),operation:String(operation||"local-change")};
+    return{tag:FIRESTORE_TAG,app:"routiner",schema:FIRESTORE_SCHEMA,storageKey:STORAGE_KEY,appVersion:APP_VERSION,dayStartHour:DAY_START_HOUR,updatedAt:Date.now(),serverUpdatedAt:cloudSync.api.serverTimestamp(),updatedBy:clientId,activeRun:clone(activeRunValue||null),activeRunUpdatedAt:Number(activeRunUpdatedValue||0),state:slice,stateHash:hash,revision:Number(revision||0),operation:String(operation||"local-change")};
   }
   function historyPayload(data,remote,remoteHash,revision){return{tag:"ROUTINER_RECOVERY_V2",schema:2,state:remote,stateHash:remoteHash,archivedRevision:Number(revision||0),operation:String(data?.operation||"legacy"),archivedAt:cloudSync.api.serverTimestamp(),archivedBy:clientId}}
   function conflictPayload(local,localHash,remoteRevision,remoteHash,operation){return{tag:"ROUTINER_CONFLICT_V1",schema:1,state:local,stateHash:localHash,baseRevision:Number(baseRevision||0),baseHash:String(baseHash||""),observedRevision:Number(remoteRevision||0),observedHash:String(remoteHash||""),operation:String(operation||"local-change"),createdAt:cloudSync.api.serverTimestamp(),updatedBy:clientId}}
@@ -87,14 +86,14 @@
       const result=await mod.runTransaction(cloudSync.db,async(transaction)=>{
         const snap=await transaction.get(ref),exists=snap.exists(),data=exists?snap.data()||{}:{},parsed=exists?parsePayload(data):null;
         if(exists&&!parsed)throw new Error("cloud-state-invalid");
-        const remote=exists?cloudStateSlice(parsed.nextState):null,remoteHash=exists?parsed.stateHash:"",remoteRevision=exists?currentRevision(data):0;
+        const remoteExact=exists?data.state:null,remoteHash=exists?parsed.stateHash:"",remoteRevision=exists?currentRevision(data):0;
         if(exists&&remoteHash===localHash)return{kind:"same",revision:remoteRevision,hash:remoteHash};
         if(!force&&exists&&(remoteRevision!==baseRevision||remoteHash!==baseHash)){
           transaction.set(conflictRef(),conflictPayload(local,localHash,remoteRevision,remoteHash,operation),{merge:false});
           return{kind:"conflict",parsed};
         }
-        if(exists)transaction.set(historyRef(remoteRevision),historyPayload(data,remote,remoteHash,remoteRevision),{merge:false});
-        const nextRevision=remoteRevision+1,payload=mainPayload(state,nextRevision,operation);
+        if(exists)transaction.set(historyRef(remoteRevision),historyPayload(data,remoteExact,hashText(JSON.stringify(remoteExact)),remoteRevision),{merge:false});
+        const nextRevision=remoteRevision+1,payload=mainPayload(state,nextRevision,operation,exists?data.activeRun:cloudSync.activeRun,exists?data.activeRunUpdatedAt:cloudSync.activeRunUpdatedAt);
         transaction.set(ref,payload,{merge:false});
         return{kind:"written",revision:nextRevision,hash:payload.stateHash};
       });
