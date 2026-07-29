@@ -8,6 +8,7 @@
   "state-model.js",
   "storage.js",
   "sync.js",
+  "data-safety.js",
   "session.js",
   "ui.js",
   "calendar.js",
