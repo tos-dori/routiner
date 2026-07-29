@@ -25,6 +25,18 @@
   "bootstrap.js"
 ];
 
+  function loadStylesheet(relativePath) {
+    return new Promise((resolve, reject) => {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = new URL(relativePath, baseUrl).href;
+      link.dataset.routinerStyle = relativePath;
+      link.addEventListener('load', resolve, { once: true });
+      link.addEventListener('error', () => reject(new Error(`Failed to load ${relativePath}`)), { once: true });
+      document.head.appendChild(link);
+    });
+  }
+
   function loadClassicScript(relativePath) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
@@ -38,6 +50,7 @@
   }
 
   (async () => {
+    await loadStylesheet('../styles/button-system.css');
     for (const file of moduleFiles) await loadClassicScript(file);
     document.documentElement.dataset.routinerLoaded = 'true';
   })().catch((error) => {
