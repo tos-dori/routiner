@@ -49,6 +49,7 @@ const seeded = await page.evaluate(() => {
     version: APP_VERSION,
     key: STORAGE_KEY,
     modules: document.querySelectorAll('script[data-routiner-module]').length,
+    styles: Array.from(document.querySelectorAll('link[data-routiner-style]')).map((link) => link.dataset.routinerStyle),
     privateDataReady: typeof window.RoutinerPrivateData?.status === 'function',
     bootstrapBefore,
     privateInstalled,
@@ -57,9 +58,10 @@ const seeded = await page.evaluate(() => {
 });
 
 if (
-  seeded.version !== '1.57' ||
+  seeded.version !== '1.58' ||
   seeded.key !== 'personal_routine_v01' ||
   seeded.modules !== 21 ||
+  !seeded.styles.includes('../styles/button-system.css') ||
   !seeded.privateDataReady ||
   !seeded.bootstrapBefore ||
   !seeded.privateInstalled ||
@@ -96,6 +98,44 @@ if (
   !migrated.migrationCheckpoint
 ) {
   throw new Error(`Preserving migration failed: ${JSON.stringify(migrated)}`);
+}
+
+const buttonSystem = await page.evaluate(() => {
+  openEditor('morning', 'home');
+  editStepId = getRoutine('morning').steps[0].id;
+  renderEditor();
+  const labels = Array.from(document.querySelectorAll('.duration-btn')).slice(0, 4).map((button) => button.textContent.trim());
+  const durationValue = document.querySelector('.duration-value')?.textContent.trim();
+  const stepTime = document.querySelector('.step-time-pill')?.textContent.trim();
+  const buttonFont = getComputedStyle(document.querySelector('.duration-btn')).fontFamily;
+  const inputFont = getComputedStyle(document.querySelector('.field')).fontFamily;
+  const orderButtons = Array.from(document.querySelectorAll('.step-order-controls .icon-btn')).map((button) => button.textContent.trim());
+  const detail = getComputedStyle(document.querySelector('.step-detail.active'));
+  return {
+    labels,
+    durationValue,
+    stepTime,
+    buttonFont,
+    inputFont,
+    orderButtons,
+    detailBorderLeft: detail.borderLeftWidth,
+    detailBorderTop: detail.borderTopWidth,
+    horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth
+  };
+});
+
+if (
+  JSON.stringify(buttonSystem.labels) !== JSON.stringify(['−1m', '−15s', '+15s', '+1m']) ||
+  buttonSystem.durationValue !== '1m' ||
+  buttonSystem.stepTime !== '1m' ||
+  !buttonSystem.buttonFont.includes('ui-rounded') ||
+  buttonSystem.buttonFont === buttonSystem.inputFont ||
+  JSON.stringify(buttonSystem.orderButtons) !== JSON.stringify(['↑', '↓']) ||
+  buttonSystem.detailBorderLeft !== '0px' ||
+  buttonSystem.detailBorderTop === '0px' ||
+  buttonSystem.horizontalOverflow
+) {
+  throw new Error(`Compact button system failed: ${JSON.stringify(buttonSystem)}`);
 }
 
 const timerRetention = await page.evaluate(() => {
@@ -170,5 +210,5 @@ if (badLocalResponses.length) throw new Error(`Local resource errors: ${badLocal
 const fatalErrors = pageErrors.filter((message) => /ReferenceError|SyntaxError/.test(message));
 if (fatalErrors.length) throw new Error(`Runtime errors: ${fatalErrors.join(' | ')}`);
 
-await page.screenshot({ path: '/tmp/routiner-v157-smoke.png', fullPage: true });
+await page.screenshot({ path: '/tmp/routiner-v158-smoke.png', fullPage: true });
 await browser.close();

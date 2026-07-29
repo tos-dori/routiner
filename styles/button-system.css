@@ -1,0 +1,254 @@
+:root {
+  --control-font: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --control-fill: rgba(67, 54, 38, 0.075);
+  --control-fill-strong: rgba(67, 54, 38, 0.115);
+  --control-line: rgba(67, 54, 38, 0.10);
+  --control-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 1px 2px rgba(67, 54, 38, 0.06);
+}
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button:not(.routine-card):not(.step-card):not(.calendar-day) {
+  font-family: var(--control-font);
+  font-weight: 820;
+  letter-spacing: -0.012em;
+  font-variant-numeric: tabular-nums;
+}
+
+.top-btn,
+.auth-action,
+.backup-action,
+.plan-control-chip,
+.main-action,
+.sub-action,
+.full-btn,
+.ghost-btn,
+.routine-tab,
+.duration-btn,
+.small-action,
+.icon-btn,
+.add-step-card,
+.reset-routine-card,
+.calendar-nav-btn,
+.calendar-close,
+.clear-memo,
+.backup-clear {
+  box-shadow: var(--control-shadow);
+  transition: transform 90ms ease, background 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.top-btn,
+.backup-action,
+.plan-control-chip,
+.sub-action,
+.ghost-btn,
+.routine-tab,
+.small-action,
+.add-step-card,
+.reset-routine-card {
+  background: var(--control-fill);
+  border-color: transparent;
+}
+
+.top-btn:active,
+.auth-action:active,
+.backup-action:active,
+.plan-control-chip:active,
+.main-action:active,
+.sub-action:active,
+.full-btn:active,
+.ghost-btn:active,
+.routine-tab:active,
+.duration-btn:active,
+.small-action:active,
+.icon-btn:active,
+.add-step-card:active,
+.reset-routine-card:active,
+.calendar-nav-btn:active,
+.calendar-close:active,
+.clear-memo:active,
+.backup-clear:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: inset 0 1px 2px rgba(67, 54, 38, 0.13);
+}
+
+.auth-action.primary,
+.backup-action.primary,
+.main-action,
+.full-btn,
+.small-action.primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 1px 2px rgba(67, 54, 38, 0.08);
+}
+
+.routine-card,
+.step-card,
+.calendar-day {
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+.top-btn {
+  min-width: 44px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.backup-action {
+  border: 0;
+  font-size: 11px;
+}
+
+.backup-action.secondary {
+  width: 100%;
+  height: auto;
+  min-height: 34px;
+  margin-top: 5px;
+  padding: 7px 9px;
+  text-align: left;
+  white-space: normal;
+  line-height: 1.25;
+}
+
+.plan-control-chip,
+.routine-tab {
+  border: 0;
+}
+
+.plan-control-chip.active,
+.routine-tab.active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.sub-action,
+.ghost-btn {
+  border: 0;
+}
+
+.icon-top-btn,
+.sub-action.step-nav-action,
+.calendar-nav-btn,
+.calendar-close,
+.clear-memo,
+.backup-clear {
+  background: var(--control-fill-strong);
+  border: 0;
+}
+
+.step-detail {
+  border: 0;
+  border-top: 1px solid rgba(67, 54, 38, 0.10);
+  border-radius: 0;
+  background: transparent;
+  padding: 8px 4px 4px;
+  gap: 7px;
+}
+
+.duration-control {
+  grid-template-columns: 42px 48px minmax(58px, 1fr) 48px 42px;
+  gap: 5px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.duration-btn {
+  min-height: 34px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--control-fill);
+  color: color-mix(in srgb, var(--ink) 66%, var(--muted));
+  font-size: 12px;
+  font-weight: 820;
+  padding: 0 3px;
+}
+
+.duration-btn.minute-adjust {
+  background: color-mix(in srgb, var(--accent) 10%, rgba(255, 255, 255, 0.28));
+  color: color-mix(in srgb, var(--accent) 66%, var(--ink));
+}
+
+.duration-value {
+  min-height: 34px;
+  font-family: var(--control-font);
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+
+.step-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 1px;
+}
+
+.step-order-controls {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  width: 38px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: var(--control-fill);
+  color: color-mix(in srgb, var(--ink) 62%, var(--muted));
+  font-size: 18px;
+  font-weight: 760;
+  line-height: 1;
+}
+
+.icon-btn.danger {
+  width: auto;
+  min-width: 48px;
+  padding: 0 11px;
+  background: color-mix(in srgb, var(--danger) 9%, rgba(255, 255, 255, 0.30));
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.add-step-card {
+  min-height: 38px;
+  border: 0;
+  border-radius: 14px;
+  font-size: 13px;
+}
+
+.reset-routine-card {
+  min-height: 40px;
+  border: 0;
+  border-radius: 14px;
+  font-size: 12px;
+}
+
+.reset-routine-card.confirm {
+  box-shadow: inset 0 0 0 1px rgba(199, 95, 78, 0.20);
+}
+
+.clear-memo,
+.backup-clear {
+  font-family: var(--control-font);
+}
+
+@media (max-width: 360px) {
+  .duration-control {
+    grid-template-columns: 38px 43px minmax(52px, 1fr) 43px 38px;
+    gap: 4px;
+  }
+
+  .duration-btn {
+    font-size: 11px;
+  }
+}

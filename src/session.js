@@ -70,14 +70,14 @@ function formatDuration(sec) {
       const safe = Math.max(0, Math.round(sec));
       const m = Math.floor(safe / 60);
       const s = safe % 60;
-      if (m <= 0) return `${s}초`;
-      if (s === 0) return `${m}분`;
-      return `${m}분 ${s}초`;
+      if (m <= 0) return `${s}s`;
+      if (s === 0) return `${m}m`;
+      return `${m}m ${s}s`;
     }
 
 function formatCardDuration(sec) {
       const minutes = Math.max(1, Math.round((Number(sec) || 0) / 60));
-      return `${minutes}분`;
+      return `${minutes}m`;
     }
 
 function totalSeconds(routine) {
