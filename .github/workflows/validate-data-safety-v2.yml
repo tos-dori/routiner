@@ -1,0 +1,68 @@
+name: Validate Routiner Data Safety v2
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install validation dependencies
+        run: npm install --no-package-lock
+
+      - name: Validate static structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f src/data-safety.js
+          test -f src/data-safety-hooks.js
+          test -f src/sync-v2.js
+          test -f firestore.rules
+          test -f firebase.json
+          test -f DATA_SAFETY.md
+          test -f docs/firebase-rules-archive/2026-07-28-console-before-data-safety.rules
+          grep -q 'sync-v2.js' src/app.js
+          grep -q 'data-safety-hooks.js' src/app.js
+          grep -q 'HISTORY_SLOTS=50' src/sync-v2.js
+          grep -q 'PERIODIC_MS=10\*60\*1000' src/data-safety.js
+          grep -q 'FIRESTORE_SCHEMA = 4' src/config.js
+          find src -name '*.js' -print0 | xargs -0 -n1 node --check
+          python3 -m json.tool firebase.json >/dev/null
+
+      - name: Test Firestore rules in emulator
+        run: npm run test:rules
+
+      - name: Install browser
+        run: npx playwright install --with-deps chromium >/dev/null 2>&1
+
+      - name: Run 390x844 migration and recovery test
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 -m http.server 4175 >/tmp/routiner-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+          ROUTINER_URL=http://127.0.0.1:4175/ node tests/smoke-routiner-v2.mjs 2>&1 | tee /tmp/routiner-smoke.log
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: routiner-v2-diagnostics
+          path: |
+            /tmp/routiner-smoke.log
+            /tmp/routiner-http.log
+            /tmp/routiner-v156-smoke.png
+          if-no-files-found: ignore
