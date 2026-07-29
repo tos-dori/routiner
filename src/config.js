@@ -1,4 +1,4 @@
-const APP_VERSION = "1.56";
+const APP_VERSION = "1.57";
 
 const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
 
@@ -39,18 +39,3 @@ const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 const DISPLAY_ROUTINE_ORDER = ["morning", "outing", "lunch", "dinner", "night"];
 
 const LONG_PRESS_MS = 560;
-
-const NIGHT_DAYLOG_NOTE = [
-      "캘린더 체크하기",
-      "Today 옮기고 내일 계획 손보기",
-      "단축어 자동화 켜고 끄기"
-    ].join("\n");
-
-const LEGACY_NIGHT_DAYLOG_NOTES = [
-      "빈칸 채우기",
-      "빈칸만 채우기",
-      "빈칸만",
-      "Today 옮기고 내일 계획 손보기",
-      "캘린더 체크하기\nToday 옮기고 내일 계획 손보기",
-      NIGHT_DAYLOG_NOTE
-    ];

@@ -1,12 +1,23 @@
 (function(){
   const originalReset=performResetCurrentRoutineToDefault;
+  const originalRequestReset=requestResetCurrentRoutineToDefault;
   const originalImport=importBackupFromInput;
   const originalSetBackupPanelOpen=setBackupPanelOpen;
   let recoveryHost=null;
   let cloudItems=[];
   let conflictItems=[];
 
+  function privateDefaultsAvailable(){
+    return Boolean(window.RoutinerDataSafety?.privateDefaultsReady?.()&&window.RoutinerDataSafety?.defaultById?.(editRoutineId));
+  }
+
+  requestResetCurrentRoutineToDefault=function(){
+    if(!privateDefaultsAvailable()){showToast("비공개 기본값 확인 전이라 재설정을 중단했어");return}
+    return originalRequestReset();
+  };
+
   performResetCurrentRoutineToDefault=function(){
+    if(!privateDefaultsAvailable()){showToast("비공개 기본값 확인 전이라 재설정을 중단했어");return}
     const before=clone(state);
     if(!window.RoutinerDataSafety?.checkpointCurrent("reset-default-routine",true)){showToast("복구본을 남기지 못해 재설정을 중단했어");return}
     window.RoutinerSyncV2?.markOperation("reset-default-routine");

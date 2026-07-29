@@ -45,7 +45,7 @@
     try{localStorage.setItem(STATUS_KEY,JSON.stringify({uid:cloudSync.user?.uid||"",...status}))}catch{}
   }
   function verifySnapshot(snapshot){
-    if(!snapshot.exists()){setStatus({state:"missing",message:"비공개 기본값 생성 전",hash:"",verifiedAt:0});return null}
+    if(!snapshot.exists()){setStatus({state:"missing",message:"비공개 기본값 문서 없음",hash:"",verifiedAt:0});return null}
     try{
       const result=validatePrivateData(snapshot.data()||{});
       window.RoutinerDataSafety?.setPrivateDefaults(result.routines);
@@ -62,7 +62,6 @@
     if(!cloudSync.api||!cloudSync.db)throw new Error("firebase-api-not-ready");
     firestoreMod=await import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore.js`);
     const originalGetDoc=cloudSync.api.getDoc;
-    const originalSetDoc=cloudSync.api.setDoc;
     cloudSync.api.getDoc=async function(ref){
       if(!privatePath(ref))return originalGetDoc(ref);
       const snapshot=await firestoreMod.getDocFromServer(ref);
@@ -70,17 +69,13 @@
       return snapshot;
     };
     cloudSync.api.setDoc=async function(ref,data,options){
-      if(!privatePath(ref))return originalSetDoc(ref,data,options);
+      if(!privatePath(ref))return firestoreMod.setDoc(ref,data,options);
       const existing=await firestoreMod.getDocFromServer(ref);
-      if(existing.exists()){
-        verifySnapshot(existing);
-        return;
+      if(!existing.exists()){
+        setStatus({state:"missing",message:"비공개 기본값 문서 없음 · 자동 생성 중단",hash:"",verifiedAt:0});
+        throw new Error("private-defaults-missing");
       }
-      const expected=validatePrivateData(data||{});
-      await originalSetDoc(ref,data,options);
-      const verified=await firestoreMod.getDocFromServer(ref);
-      const result=verifySnapshot(verified);
-      if(!result||result.hash!==expected.hash)throw new Error("private-defaults-readback-mismatch");
+      verifySnapshot(existing);
     };
     apiPatched=true;
   }

@@ -62,14 +62,11 @@
   }
   async function ensurePrivateDefaults(){
     if(!cloudSync.ready||!cloudSync.user)return false;
-    const ref=privateDefaultsRef(),snap=await cloudSync.api.getDoc(ref);
-    if(snap.exists()){
-      const data=snap.data()||{};
-      if(Array.isArray(data.routines)&&data.routines.length){window.RoutinerDataSafety?.setPrivateDefaults(data.routines);return true}
-    }
-    const routines=clone(DEFAULT_ROUTINES),defaultsHash=hashText(stableJson(routines));
-    await cloudSync.api.setDoc(ref,{tag:"ROUTINER_PRIVATE_DEFAULTS_V1",schema:1,routines,defaultsHash,createdAt:cloudSync.api.serverTimestamp(),updatedAt:cloudSync.api.serverTimestamp(),updatedBy:clientId},{merge:false});
-    window.RoutinerDataSafety?.setPrivateDefaults(routines);return true;
+    const snap=await cloudSync.api.getDoc(privateDefaultsRef());
+    if(!snap.exists())return false;
+    const data=snap.data()||{};
+    if(!Array.isArray(data.routines)||!data.routines.length)return false;
+    return window.RoutinerDataSafety?.setPrivateDefaults(data.routines)===true;
   }
   async function preserveConflict(local,localHash,remoteRevision,remoteHash,operation){
     try{await cloudSync.api.setDoc(conflictRef(),conflictPayload(local,localHash,remoteRevision,remoteHash,operation),{merge:false})}catch(error){if(navigator.onLine)console.warn("Routiner conflict preservation failed",error)}
@@ -140,10 +137,15 @@
   syncCloudAfterSignIn=async function(){
     if(!cloudSync.ready||!cloudSync.user)return;
     try{
-      restorePendingOperation();await ensurePrivateDefaults();
+      restorePendingOperation();
+      const defaultsReady=await ensurePrivateDefaults();
       const profile=readProfile();baseRevision=profile?.uid===cloudSync.user.uid?Number(profile.revision||0):0;baseHash=profile?.uid===cloudSync.user.uid?String(profile.hash||""):"";
       const ref=cloudMainRef(),snap=await cloudSync.api.getDoc(ref),localHash=compactHash(state);
-      if(!snap.exists()){if(safeLocal())await safeWriteCloud(true,"initial-upload");return}
+      if(!snap.exists()){
+        if(!defaultsReady&&window.RoutinerDataSafety?.bootstrapPending?.()){showToast("비공개 기본값을 확인할 수 없어 초기 저장을 중단했어");return}
+        if(safeLocal())await safeWriteCloud(true,"initial-upload");
+        return;
+      }
       const parsed=parsePayload(snap.data());if(!parsed){showToast("클라우드 데이터 형식 오류 · 자동 덮어쓰기 중단");return}
       applyRemoteActiveRun(parsed.activeRun,parsed.activeRunUpdatedAt);
       if(parsed.stateHash===localHash){writeProfile(parsed.stateHash,parsed.revision);cloudSync.lastSavedHash=parsed.stateHash;clearPendingOperation();return}
