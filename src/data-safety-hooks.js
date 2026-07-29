@@ -56,7 +56,8 @@
       try{
         const restored=window.RoutinerDataSafety.restoreLocal(Number(slot));
         state=normalizeLoadedState(restored);selectedDateKey=todayKey();isDatePlanMode=false;activeRoutineId=null;editRoutineId=state.routines[0]?.id||"morning";
-        if(saveState({reason:"restore-local"})===false)throw new Error("restore-save-failed");
+        saveState({reason:"restore-local"});
+        if(!window.RoutinerDataSafety.isSafe())throw new Error("restore-save-failed");
         renderHome();window.RoutinerSyncV2?.markOperation("restore-local");await window.RoutinerSyncV2?.safeWriteCloud(true,"restore-local");showToast("기기 복구본 복원됨");renderRecoveryPanel();
       }catch(error){console.warn("Routiner local restore failed",error);showToast("기기 복구 실패")}
       return;
