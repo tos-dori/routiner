@@ -11,6 +11,11 @@
   let issue="";
   let privateDefaults=null;
 
+  const originalNormalizeLoadedState=normalizeLoadedState;
+  const originalLoadState=loadState;
+  const originalWriteStoredState=writeStoredState;
+  const originalDefaultById=defaultById;
+
   function safeGet(key){try{return localStorage.getItem(key)}catch{return null}}
   function safeSet(key,value){try{localStorage.setItem(key,value);return true}catch{return false}}
   function slotKey(index){return`${PREFIX}${String(index).padStart(2,"0")}`}
@@ -53,16 +58,21 @@
   }
   function checkpointCurrent(reason,force=true){const raw=safeGet(STORAGE_KEY);return raw?checkpointRaw(raw,reason||"manual",force):false}
   function quarantine(raw,error){const index=cursor(CORRUPT_CURSOR_KEY,MAX_CORRUPT);safeSet(corruptKey(index),JSON.stringify({schema:2,createdAt:Date.now(),error:String(error?.message||error||"invalid"),raw:String(raw||"")}));safeSet(CORRUPT_CURSOR_KEY,String((index+1)%MAX_CORRUPT))}
-  function load(raw,fallbackFactory,normalize){
+  function safeNormalize(parsed){
+    const candidate=clone(parsed||{});
+    if(candidate.routineSchema!==ROUTINE_SCHEMA_VERSION)candidate.routineSchema=ROUTINE_SCHEMA_VERSION;
+    return originalNormalizeLoadedState(candidate);
+  }
+  function load(raw,fallbackFactory){
     if(!raw){blocked=false;issue="";return fallbackFactory()}
     try{
       const parsed=parseRaw(raw);
       if(parsed.routineSchema!==ROUTINE_SCHEMA_VERSION)checkpointRaw(raw,"before-schema-migration",true);
-      const normalized=normalize(parsed);validateParsed(normalized);blocked=false;issue="";return normalized;
+      const normalized=safeNormalize(parsed);validateParsed(normalized);blocked=false;issue="";return normalized;
     }catch(error){
       quarantine(raw,error);
       const recovery=listCheckpoints()[0];
-      if(recovery){safeSet(STORAGE_KEY,recovery.raw);blocked=false;issue="손상된 저장을 자동 복구본으로 되돌렸어.";return normalize(parseRaw(recovery.raw))}
+      if(recovery){safeSet(STORAGE_KEY,recovery.raw);blocked=false;issue="손상된 저장을 자동 복구본으로 되돌렸어.";return safeNormalize(parseRaw(recovery.raw))}
       blocked=true;issue="로컬 저장이 손상되어 클라우드 저장을 차단했어.";return fallbackFactory();
     }
   }
@@ -72,15 +82,18 @@
     if(current&&current!==normalized)checkpointRaw(current,reason,forceReason(reason));
     try{rawWriter(targetState,options);blocked=false;if(!issue.includes("자동 복구본"))issue="";return true}catch(error){blocked=true;issue="브라우저 저장 공간에 기록하지 못했어.";return false}
   }
-  function restoreLocal(slot){const item=readCheckpoint(Number(slot));if(!item)throw new Error("checkpoint-not-found");checkpointCurrent("before-restore",true);if(!safeSet(STORAGE_KEY,item.raw))throw new Error("restore-write-failed");blocked=false;issue="선택한 로컬 복구본을 복원했어.";return parseRaw(item.raw)}
+  function restoreLocal(slot){const item=readCheckpoint(Number(slot));if(!item)throw new Error("checkpoint-not-found");checkpointCurrent("before-restore",true);if(!safeSet(STORAGE_KEY,item.raw))throw new Error("restore-write-failed");blocked=false;issue="선택한 로컬 복구본을 복원했어.";return safeNormalize(parseRaw(item.raw))}
   function cloudStateSafe(value){try{validateParsed(value);return byteLength(JSON.stringify(value))<=MAX_CLOUD_BYTES}catch{return false}}
   function cloudSize(value){try{return byteLength(JSON.stringify(value))}catch{return Infinity}}
   function setPrivateDefaults(routines){if(Array.isArray(routines)&&routines.length)privateDefaults=clone(routines)}
-  function defaultById(id){if(!Array.isArray(privateDefaults))return null;return privateDefaults.find((routine)=>routine.id===id)||privateDefaults[0]||null}
+  function privateDefaultById(id){if(!Array.isArray(privateDefaults))return null;return privateDefaults.find((routine)=>routine.id===id)||privateDefaults[0]||null}
+
+  normalizeLoadedState=function(parsed){return safeNormalize(parsed)};
+  loadState=function(){return load(safeGet(STORAGE_KEY),defaultState)};
+  writeStoredState=function(targetState,options={}){return write(targetState,options,originalWriteStoredState)};
+  defaultById=function(id){return privateDefaultById(id)||originalDefaultById(id)};
 
   window.RoutinerDataSafety={
-    load,
-    write,
     checkpointCurrent,
     listCheckpoints,
     restoreLocal,
@@ -91,6 +104,7 @@
     maxCloudBytes:MAX_CLOUD_BYTES,
     setPrivateDefaults,
     privateDefaultsReady:()=>Array.isArray(privateDefaults)&&privateDefaults.length>0,
-    defaultById
+    defaultById:privateDefaultById,
+    validateParsed
   };
 })();
