@@ -19,6 +19,7 @@
   "runtime.js",
   "scroll.js",
   "backup.js",
+  "data-safety-hooks.js",
   "events.js",
   "bootstrap.js"
 ];
