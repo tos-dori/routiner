@@ -4,6 +4,7 @@
   const originalSetBackupPanelOpen=setBackupPanelOpen;
   let recoveryHost=null;
   let cloudItems=[];
+  let conflictItems=[];
 
   performResetCurrentRoutineToDefault=function(){
     const before=clone(state);
@@ -42,13 +43,23 @@
   }
   function timeLabel(value){const date=new Date(Number(value||0));return Number.isNaN(date.getTime())?"시간 미상":date.toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}
   function localItems(){return(window.RoutinerDataSafety?.listCheckpoints()||[]).map((item)=>{let count=0;try{count=JSON.parse(item.raw).routines.reduce((sum,routine)=>sum+(routine.steps?.length||0),0)}catch{}return{source:"local",slot:String(item.slot),sort:item.createdAt,label:`기기 · ${timeLabel(item.createdAt)} · ${count}단계 · ${item.reason}`}})}
+  function privateStatusHtml(){
+    const status=window.RoutinerPrivateData?.status?.();
+    if(!status)return'<div class="backup-help">비공개 기본값 확인 전</div>';
+    const label=status.state==="verified"?`비공개 기본값 검증됨 · ${timeLabel(status.verifiedAt)}`:status.message;
+    return`<div class="backup-help">${escapeHtml(label)}</div>`;
+  }
   async function renderRecoveryPanel(){
-    const host=ensureHost();host.innerHTML='<div class="backup-panel-title">복구본</div><div class="backup-help">현재 상태는 복원 직전에 다시 보관돼.</div><div id="routinerRecoveryList">불러오는 중…</div>';
+    const host=ensureHost();host.innerHTML=`<div class="backup-panel-title">복구본</div>${privateStatusHtml()}<div class="backup-help">현재 상태는 복원 직전에 다시 보관돼.</div><div id="routinerRecoveryList">불러오는 중…</div>`;
     try{cloudItems=await(window.RoutinerSyncV2?.listCloudHistory?.()||Promise.resolve([]))}catch{cloudItems=[]}
-    const items=localItems().concat(cloudItems.map((item)=>({source:"cloud",slot:item.slot,sort:item.revision,label:`계정 · r${item.revision} · ${item.operation}`}))).sort((a,b)=>b.sort-a.sort);
+    try{conflictItems=await(window.RoutinerPrivateData?.listConflicts?.()||Promise.resolve([]))}catch{conflictItems=[]}
+    const items=localItems()
+      .concat(cloudItems.map((item)=>({source:"cloud",slot:item.slot,sort:item.revision,label:`계정 · r${item.revision} · ${item.operation}`})))
+      .concat(conflictItems.map((item)=>({source:"conflict",slot:item.slot,sort:item.createdAt,label:`충돌 보존본 · ${timeLabel(item.createdAt)} · ${item.operation}`})))
+      .sort((a,b)=>b.sort-a.sort);
     const list=host.querySelector("#routinerRecoveryList");
     if(!items.length){list.textContent="사용 가능한 복구본 없음";return}
-    list.innerHTML=items.slice(0,18).map((item)=>`<button type="button" class="backup-action secondary" data-recovery-source="${item.source}" data-recovery-slot="${item.slot}">${escapeHtml(item.label)}</button>`).join("");
+    list.innerHTML=items.slice(0,20).map((item)=>`<button type="button" class="backup-action secondary" data-recovery-source="${item.source}" data-recovery-slot="${item.slot}">${escapeHtml(item.label)}</button>`).join("");
     list.querySelectorAll("[data-recovery-source]").forEach((button)=>button.addEventListener("click",()=>restore(button.dataset.recoverySource,button.dataset.recoverySlot)));
   }
   async function restore(source,slot){
@@ -62,7 +73,10 @@
       }catch(error){console.warn("Routiner local restore failed",error);showToast("기기 복구 실패")}
       return;
     }
-    const item=cloudItems.find((entry)=>entry.slot===slot);if(!item)return;
-    const ok=await window.RoutinerSyncV2?.restoreCloudHistory(item);showToast(ok?"계정 복구본 복원됨":"계정 복구 실패");renderRecoveryPanel();
+    const item=source==="conflict"?conflictItems.find((entry)=>entry.slot===slot):cloudItems.find((entry)=>entry.slot===slot);
+    if(!item)return;
+    const ok=await window.RoutinerSyncV2?.restoreCloudHistory(item);
+    if(ok&&source==="conflict")await window.RoutinerPrivateData?.removeConflict?.(slot);
+    showToast(ok?(source==="conflict"?"충돌 보존본 복원됨":"계정 복구본 복원됨"):"계정 복구 실패");renderRecoveryPanel();
   }
 })();
