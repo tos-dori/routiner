@@ -1,4 +1,4 @@
-const APP_VERSION = "1.55";
+const APP_VERSION = "1.56";
 
 const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
 
@@ -10,7 +10,7 @@ const BACKUP_SCHEMA = 1;
 
 const FIRESTORE_TAG = "ROUTINER_FIRESTORE_STATE_V1";
 
-const FIRESTORE_SCHEMA = 3;
+const FIRESTORE_SCHEMA = 4;
 
 const FIRESTORE_DOC_ID = "main";
 
