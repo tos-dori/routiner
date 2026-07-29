@@ -20,7 +20,19 @@ await page.goto(url, { waitUntil: 'domcontentloaded' });
 await waitLoaded();
 
 const seeded = await page.evaluate(() => {
+  const privateDefaults = [
+    { id: 'morning', icon: '↗', name: '아침', color: '#C85A4A', soft: '#F3DDD9', doneText: '완료', steps: [{ id: 'm1', icon: '·', title: '서버 기본 아침', note: '', minutes: 1 }] },
+    { id: 'lunch', icon: '☀️', name: '점심', color: '#A6A43A', soft: '#EEF0CF', doneText: '완료', steps: [{ id: 'l1', icon: '·', title: '서버 기본 점심', note: '', minutes: 1 }] },
+    { id: 'dinner', icon: '🌆', name: '저녁', color: '#2389C7', soft: '#DCEFFA', doneText: '완료', steps: [{ id: 'd1', icon: '·', title: '서버 기본 저녁', note: '', minutes: 1 }] },
+    { id: 'outing', icon: '🧭', name: '외출', color: '#D88A2A', soft: '#F4E5CC', doneText: '완료', steps: [{ id: 'o1', icon: '·', title: '서버 기본 외출', note: '', minutes: 1 }] },
+    { id: 'night', icon: '↓', name: '밤', color: '#934B8F', soft: '#F2E0EC', doneText: '완료', steps: [{ id: 'n1', icon: '·', title: '서버 기본 밤', note: '', minutes: 1 }] }
+  ];
+
   showScreen('home');
+  const bootstrapBefore = window.RoutinerDataSafety.bootstrapPending();
+  const privateInstalled = window.RoutinerDataSafety.setPrivateDefaults(privateDefaults);
+  const hydratedTitle = getRoutine('morning').steps[0].title;
+
   const morning = getRoutine('morning');
   morning.steps[0].title = '개인 수정 보존';
   morning.steps[0].note = '사용자 메모';
@@ -37,11 +49,22 @@ const seeded = await page.evaluate(() => {
     version: APP_VERSION,
     key: STORAGE_KEY,
     modules: document.querySelectorAll('script[data-routiner-module]').length,
-    privateDataReady: typeof window.RoutinerPrivateData?.status === 'function'
+    privateDataReady: typeof window.RoutinerPrivateData?.status === 'function',
+    bootstrapBefore,
+    privateInstalled,
+    hydratedTitle
   };
 });
 
-if (seeded.version !== '1.56' || seeded.key !== 'personal_routine_v01' || seeded.modules !== 21 || !seeded.privateDataReady) {
+if (
+  seeded.version !== '1.57' ||
+  seeded.key !== 'personal_routine_v01' ||
+  seeded.modules !== 21 ||
+  !seeded.privateDataReady ||
+  !seeded.bootstrapBefore ||
+  !seeded.privateInstalled ||
+  seeded.hydratedTitle !== '서버 기본 아침'
+) {
   throw new Error(`Unexpected initial structure: ${JSON.stringify(seeded)}`);
 }
 
@@ -54,6 +77,7 @@ const migrated = await page.evaluate(() => {
   return {
     title: morning.steps[0].title,
     note: morning.steps[0].note,
+    routineName: morning.name,
     sessionStatus: state.sessions.morning?.status?.[0],
     sessionIndex: state.sessions.morning?.index,
     completed: state.completed.morning,
@@ -63,7 +87,14 @@ const migrated = await page.evaluate(() => {
   };
 });
 
-if (migrated.title !== '개인 수정 보존' || migrated.note !== '사용자 메모' || migrated.sessionStatus !== 'done' || !migrated.completed || !migrated.migrationCheckpoint) {
+if (
+  migrated.title !== '개인 수정 보존' ||
+  migrated.note !== '사용자 메모' ||
+  migrated.routineName !== '아침' ||
+  migrated.sessionStatus !== 'done' ||
+  !migrated.completed ||
+  !migrated.migrationCheckpoint
+) {
   throw new Error(`Preserving migration failed: ${JSON.stringify(migrated)}`);
 }
 
@@ -80,18 +111,42 @@ const timerRetention = await page.evaluate(() => {
 if (timerRetention.after > timerRetention.before + 1) throw new Error(`Timer exhausted recovery history: ${JSON.stringify(timerRetention)}`);
 
 const resetResult = await page.evaluate(() => {
+  const privateDefaults = [
+    { id: 'morning', icon: '↗', name: '아침', color: '#C85A4A', soft: '#F3DDD9', doneText: '완료', steps: [{ id: 'm1', icon: '·', title: '서버 기본 아침', note: '', minutes: 1 }] },
+    { id: 'lunch', icon: '☀️', name: '점심', color: '#A6A43A', soft: '#EEF0CF', doneText: '완료', steps: [{ id: 'l1', icon: '·', title: '서버 기본 점심', note: '', minutes: 1 }] },
+    { id: 'dinner', icon: '🌆', name: '저녁', color: '#2389C7', soft: '#DCEFFA', doneText: '완료', steps: [{ id: 'd1', icon: '·', title: '서버 기본 저녁', note: '', minutes: 1 }] },
+    { id: 'outing', icon: '🧭', name: '외출', color: '#D88A2A', soft: '#F4E5CC', doneText: '완료', steps: [{ id: 'o1', icon: '·', title: '서버 기본 외출', note: '', minutes: 1 }] },
+    { id: 'night', icon: '↓', name: '밤', color: '#934B8F', soft: '#F2E0EC', doneText: '완료', steps: [{ id: 'n1', icon: '·', title: '서버 기본 밤', note: '', minutes: 1 }] }
+  ];
+
   editRoutineId = 'morning';
   const routine = getRoutine('morning');
   routine.steps[0].title = '재설정 직전 표식';
   saveState({ cloud: false, reason: 'custom-before-reset' });
+
+  const beforeBlocked = window.RoutinerDataSafety.listCheckpoints().length;
+  performResetCurrentRoutineToDefault();
+  const blockedTitle = getRoutine('morning').steps[0].title;
+  const afterBlocked = window.RoutinerDataSafety.listCheckpoints().length;
+
+  window.RoutinerDataSafety.setPrivateDefaults(privateDefaults);
   performResetCurrentRoutineToDefault();
   const checkpoints = window.RoutinerDataSafety.listCheckpoints();
   return {
+    blockedTitle,
+    blockedCreatedCheckpoint: afterBlocked !== beforeBlocked,
     resetTitle: getRoutine('morning').steps[0].title,
     preserved: checkpoints.some((item) => item.reason === 'reset-default-routine' && item.raw.includes('재설정 직전 표식'))
   };
 });
-if (resetResult.resetTitle === '재설정 직전 표식' || !resetResult.preserved) throw new Error(`Reset checkpoint failed: ${JSON.stringify(resetResult)}`);
+if (
+  resetResult.blockedTitle !== '재설정 직전 표식' ||
+  resetResult.blockedCreatedCheckpoint ||
+  resetResult.resetTitle !== '서버 기본 아침' ||
+  !resetResult.preserved
+) {
+  throw new Error(`Private reset gate failed: ${JSON.stringify(resetResult)}`);
+}
 
 await page.evaluate(() => {
   getRoutine('morning').steps[0].title = '손상 복구 표식';
@@ -115,5 +170,5 @@ if (badLocalResponses.length) throw new Error(`Local resource errors: ${badLocal
 const fatalErrors = pageErrors.filter((message) => /ReferenceError|SyntaxError/.test(message));
 if (fatalErrors.length) throw new Error(`Runtime errors: ${fatalErrors.join(' | ')}`);
 
-await page.screenshot({ path: '/tmp/routiner-v156-smoke.png', fullPage: true });
+await page.screenshot({ path: '/tmp/routiner-v157-smoke.png', fullPage: true });
 await browser.close();
