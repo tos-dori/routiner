@@ -49,7 +49,7 @@
   function checkpointRaw(raw,reason,force=false){
     let parsed;try{parsed=parseRaw(raw)}catch{return false}
     const normalized=JSON.stringify(parsed),hash=hashText(normalized),latest=listCheckpoints()[0];
-    if(latest?.hash===hash)return false;
+    if(latest?.hash===hash)return true;
     if(!force&&latest&&Date.now()-latest.createdAt<PERIODIC_MS)return false;
     const index=cursor(CURSOR_KEY,MAX_CHECKPOINTS),wrapper={schema:2,createdAt:Date.now(),reason:String(reason||"periodic"),hash,size:byteLength(normalized),raw:normalized};
     if(!safeSet(slotKey(index),JSON.stringify(wrapper)))return false;
@@ -66,9 +66,11 @@
   function load(raw,fallbackFactory){
     if(!raw){blocked=false;issue="";return fallbackFactory()}
     try{
-      const parsed=parseRaw(raw);
-      if(parsed.routineSchema!==ROUTINE_SCHEMA_VERSION)checkpointRaw(raw,"before-schema-migration",true);
-      const normalized=safeNormalize(parsed);validateParsed(normalized);blocked=false;issue="";return normalized;
+      const parsed=parseRaw(raw),needsMigration=parsed.routineSchema!==ROUTINE_SCHEMA_VERSION;
+      if(needsMigration&&!checkpointRaw(raw,"before-schema-migration",true)){
+        blocked=true;issue="업데이트 전 복구본을 남기지 못해 저장과 동기화를 중단했어.";
+      }else{blocked=false;issue=""}
+      const normalized=safeNormalize(parsed);validateParsed(normalized);return normalized;
     }catch(error){
       quarantine(raw,error);
       const recovery=listCheckpoints()[0];
@@ -77,12 +79,21 @@
     }
   }
   function write(targetState,options,rawWriter){
+    if(blocked)return false;
     let normalized;try{normalized=JSON.stringify(validateParsed(targetState))}catch(error){blocked=true;issue="저장하려는 데이터 형식이 올바르지 않아 저장을 차단했어.";return false}
-    const current=safeGet(STORAGE_KEY),reason=String(options?.reason||"local-change");
-    if(current&&current!==normalized)checkpointRaw(current,reason,forceReason(reason));
+    const current=safeGet(STORAGE_KEY),reason=String(options?.reason||"local-change"),forced=forceReason(reason);
+    if(current&&current!==normalized){
+      const checkpointed=checkpointRaw(current,reason,forced);
+      if(forced&&!checkpointed){blocked=true;issue="복구본을 남기지 못해 이 변경을 중단했어.";return false}
+    }
     try{rawWriter(targetState,options);blocked=false;if(!issue.includes("자동 복구본"))issue="";return true}catch(error){blocked=true;issue="브라우저 저장 공간에 기록하지 못했어.";return false}
   }
-  function restoreLocal(slot){const item=readCheckpoint(Number(slot));if(!item)throw new Error("checkpoint-not-found");checkpointCurrent("before-restore",true);if(!safeSet(STORAGE_KEY,item.raw))throw new Error("restore-write-failed");blocked=false;issue="선택한 로컬 복구본을 복원했어.";return safeNormalize(parseRaw(item.raw))}
+  function restoreLocal(slot){
+    const item=readCheckpoint(Number(slot));if(!item)throw new Error("checkpoint-not-found");
+    if(!checkpointCurrent("before-restore",true))throw new Error("pre-restore-checkpoint-failed");
+    if(!safeSet(STORAGE_KEY,item.raw))throw new Error("restore-write-failed");
+    blocked=false;issue="선택한 로컬 복구본을 복원했어.";return safeNormalize(parseRaw(item.raw));
+  }
   function cloudStateSafe(value){try{validateParsed(value);return byteLength(JSON.stringify(value))<=MAX_CLOUD_BYTES}catch{return false}}
   function cloudSize(value){try{return byteLength(JSON.stringify(value))}catch{return Infinity}}
   function setPrivateDefaults(routines){if(Array.isArray(routines)&&routines.length)privateDefaults=clone(routines)}
