@@ -41,6 +41,9 @@ jobs:
           find src -name '*.js' -print0 | xargs -0 -n1 node --check
           python3 -m json.tool firebase.json >/dev/null
 
+      - name: Test local safety failures
+        run: node tests/data-safety-v2.mjs
+
       - name: Test Firestore rules in emulator
         run: npm run test:rules
 
