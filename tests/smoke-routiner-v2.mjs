@@ -33,10 +33,15 @@ const seeded = await page.evaluate(() => {
   const old = prepareStateForSave(clone(state));
   old.routineSchema = 'legacy-schema-test';
   localStorage.setItem(STORAGE_KEY, JSON.stringify(old));
-  return { version: APP_VERSION, key: STORAGE_KEY, modules: document.querySelectorAll('script[data-routiner-module]').length };
+  return {
+    version: APP_VERSION,
+    key: STORAGE_KEY,
+    modules: document.querySelectorAll('script[data-routiner-module]').length,
+    privateDataReady: typeof window.RoutinerPrivateData?.status === 'function'
+  };
 });
 
-if (seeded.version !== '1.56' || seeded.key !== 'personal_routine_v01' || seeded.modules !== 20) {
+if (seeded.version !== '1.56' || seeded.key !== 'personal_routine_v01' || seeded.modules !== 21 || !seeded.privateDataReady) {
   throw new Error(`Unexpected initial structure: ${JSON.stringify(seeded)}`);
 }
 
