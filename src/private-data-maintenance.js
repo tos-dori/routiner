@@ -33,6 +33,12 @@
       Array.isArray(routine.steps)&&routine.steps.length>0&&routine.steps.every((step)=>step&&typeof step==="object"&&!Array.isArray(step))
     );
   }
+  function validatePrivateData(data){
+    if(!data||data.tag!=="ROUTINER_PRIVATE_DEFAULTS_V1"||Number(data.schema)!==1||!validRoutines(data.routines))throw new Error("private-defaults-invalid");
+    const actualHash=hashText(stableJson(data.routines));
+    if(String(data.defaultsHash||"")!==actualHash)throw new Error("private-defaults-hash-mismatch");
+    return{routines:data.routines,hash:actualHash};
+  }
   function privatePath(ref){return String(ref?.path||"").endsWith("/routiner/private-defaults")}
   function setStatus(next){
     status={...status,...next};
@@ -40,19 +46,16 @@
   }
   function verifySnapshot(snapshot){
     if(!snapshot.exists()){setStatus({state:"missing",message:"비공개 기본값 생성 전",hash:"",verifiedAt:0});return null}
-    const data=snapshot.data()||{};
-    if(data.tag!=="ROUTINER_PRIVATE_DEFAULTS_V1"||Number(data.schema)!==1||!validRoutines(data.routines)){
-      setStatus({state:"blocked",message:"비공개 기본값 문서 형식 오류 · 자동 덮어쓰기 중단",hash:"",verifiedAt:0});
-      throw new Error("private-defaults-invalid");
+    try{
+      const result=validatePrivateData(snapshot.data()||{});
+      window.RoutinerDataSafety?.setPrivateDefaults(result.routines);
+      setStatus({state:"verified",message:"비공개 기본값 서버 검증 완료",hash:result.hash,verifiedAt:Date.now()});
+      return result;
+    }catch(error){
+      const mismatch=String(error?.message||"")==="private-defaults-hash-mismatch";
+      setStatus({state:"blocked",message:mismatch?"비공개 기본값 해시 불일치 · 자동 덮어쓰기 중단":"비공개 기본값 문서 형식 오류 · 자동 덮어쓰기 중단",hash:"",verifiedAt:0});
+      throw error;
     }
-    const actualHash=hashText(stableJson(data.routines));
-    if(String(data.defaultsHash||"")!==actualHash){
-      setStatus({state:"blocked",message:"비공개 기본값 해시 불일치 · 자동 덮어쓰기 중단",hash:actualHash,verifiedAt:0});
-      throw new Error("private-defaults-hash-mismatch");
-    }
-    window.RoutinerDataSafety?.setPrivateDefaults(data.routines);
-    setStatus({state:"verified",message:"비공개 기본값 서버 검증 완료",hash:actualHash,verifiedAt:Date.now()});
-    return{data,hash:actualHash};
   }
   async function patchApi(){
     if(apiPatched)return;
@@ -73,13 +76,11 @@
         verifySnapshot(existing);
         return;
       }
-      if(!validRoutines(data?.routines))throw new Error("private-defaults-write-invalid");
-      const expectedHash=hashText(stableJson(data.routines));
-      if(String(data.defaultsHash||"")!==expectedHash)throw new Error("private-defaults-write-hash-mismatch");
+      const expected=validatePrivateData(data||{});
       await originalSetDoc(ref,data,options);
       const verified=await firestoreMod.getDocFromServer(ref);
       const result=verifySnapshot(verified);
-      if(!result||result.hash!==expectedHash)throw new Error("private-defaults-readback-mismatch");
+      if(!result||result.hash!==expected.hash)throw new Error("private-defaults-readback-mismatch");
     };
     apiPatched=true;
   }
@@ -132,6 +133,8 @@
 
   window.RoutinerPrivateData={
     status:()=>({...status}),
+    validateData:validatePrivateData,
+    hashRoutines:(routines)=>hashText(stableJson(routines)),
     verify:async()=>{await patchApi();const ref=cloudSync.api.doc(cloudSync.db,"users",cloudSync.user.uid,"routiner","private-defaults");return verifySnapshot(await firestoreMod.getDocFromServer(ref))},
     listConflicts:conflictCopies,
     removeConflict:async(id)=>{
