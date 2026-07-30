@@ -22,6 +22,7 @@
   "backup.js",
   "data-safety-hooks.js",
   "events.js",
+  "management-menu.js",
   "bootstrap.js"
 ];
 
@@ -52,6 +53,7 @@
   (async () => {
     await loadStylesheet('../styles/button-system.css');
     await loadStylesheet('../styles/step-delete-safety.css');
+    await loadStylesheet('../styles/management-menu.css');
     for (const file of moduleFiles) await loadClassicScript(file);
     document.documentElement.dataset.routinerLoaded = 'true';
   })().catch((error) => {
