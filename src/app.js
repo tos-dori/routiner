@@ -21,8 +21,7 @@
   "scroll.js",
   "backup.js",
   "data-safety-hooks.js",
-  "events.js",
-  "bootstrap.js"
+  "events.js"
 ];
 
   function loadStylesheet(relativePath) {
@@ -37,12 +36,12 @@
     });
   }
 
-  function loadClassicScript(relativePath) {
+  function loadClassicScript(relativePath, track = true) {
     return new Promise((resolve, reject) => {
       const script = document.createElement('script');
       script.src = new URL(relativePath, baseUrl).href;
       script.async = false;
-      script.dataset.routinerModule = relativePath;
+      if (track) script.dataset.routinerModule = relativePath;
       script.addEventListener('load', resolve, { once: true });
       script.addEventListener('error', () => reject(new Error(`Failed to load ${relativePath}`)), { once: true });
       document.head.appendChild(script);
@@ -52,7 +51,10 @@
   (async () => {
     await loadStylesheet('../styles/button-system.css');
     await loadStylesheet('../styles/step-delete-safety.css');
+    await loadStylesheet('../styles/management-menu.css');
     for (const file of moduleFiles) await loadClassicScript(file);
+    await loadClassicScript('management-menu.js', false);
+    await loadClassicScript('bootstrap.js');
     document.documentElement.dataset.routinerLoaded = 'true';
   })().catch((error) => {
     console.error('[Routiner] module load failed', error);
