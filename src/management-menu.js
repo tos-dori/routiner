@@ -55,7 +55,7 @@
     if(!safe){target.textContent='기기 저장 확인 필요';target.dataset.tone='danger';return}
     target.dataset.tone='';
     if(!navigator.onLine){target.textContent='오프라인 · 기기 저장 정상';return}
-    if(cloudSync?.user){target.textContent=privateState==='verified'?'동기화됨 · 기본값 검증됨':'계정 연결됨 · 기기 저장 정상';return}
+    if(cloudSync?.user){target.textContent=privateState==='verified'?'계정 연결됨 · 기본값 검증됨':'계정 연결됨 · 기기 저장 정상';return}
     target.textContent='기기 저장 정상';
   }
 
