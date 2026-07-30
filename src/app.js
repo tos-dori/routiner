@@ -52,6 +52,7 @@
 
   (async () => {
     await loadStylesheet('../styles/button-system.css');
+    await loadStylesheet('../styles/step-delete-safety.css');
     for (const file of moduleFiles) await loadClassicScript(file);
     document.documentElement.dataset.routinerLoaded = 'true';
   })().catch((error) => {
