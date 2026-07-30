@@ -41,7 +41,6 @@ const deleted = await page.evaluate(() => ({
 }));
 if (deleted.count !== 1 || deleted.title !== '남길 단계' || !deleted.preserved) throw new Error(`Confirmed delete failed safety contract: ${JSON.stringify(deleted)}`);
 
-editStepId = 'safe-delete-keep';
 await page.evaluate(() => { editStepId = 'safe-delete-keep'; renderEditor(); });
 await page.click('button[data-action="step-delete"][data-index="0"]');
 const lastStep = await page.evaluate(() => ({
