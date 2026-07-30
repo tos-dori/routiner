@@ -33,6 +33,7 @@ const root = await page.evaluate(() => {
 if (JSON.stringify(root.labels) !== JSON.stringify(['복구본', '내보내기', '가져오기', '로그아웃'])) throw new Error(`Wrong Routiner menu actions: ${JSON.stringify(root)}`);
 if (root.title !== 'Routiner' || root.version !== 'v1.58' || !root.status.includes('저장 정상')) throw new Error(`Wrong Routiner menu header: ${JSON.stringify(root)}`);
 if (root.mode !== 'root' || root.importDisplay !== 'none' || root.recoveryDisplay !== 'none' || root.horizontalOverflow) throw new Error(`Wrong Routiner root mode: ${JSON.stringify(root)}`);
+await page.screenshot({ path: '/tmp/routiner-management-menu.png', fullPage: true });
 
 await page.click('.management-menu-actions button:nth-child(3)');
 const importMode = await page.evaluate(() => ({
