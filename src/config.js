@@ -1,4 +1,4 @@
-const APP_VERSION = "1.59";
+const APP_VERSION = "1.58";
 
 const ROUTINE_SCHEMA_VERSION = "2026-06-12-v1";
 
