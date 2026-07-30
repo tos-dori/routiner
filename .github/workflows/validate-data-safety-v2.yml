@@ -30,10 +30,14 @@ jobs:
           test -f src/data-safety-hooks.js
           test -f src/sync-v2.js
           test -f src/private-data-maintenance.js
+          test -f src/management-menu.js
           test -f styles/button-system.css
           test -f styles/step-delete-safety.css
+          test -f styles/management-menu.css
           test -f tests/step-delete-safety.mjs
           test -f tests/step-delete-browser.mjs
+          test -f tests/management-menu.mjs
+          test -f tests/management-menu-browser.mjs
           test -f firestore.rules
           test -f firebase.json
           test -f DATA_SAFETY.md
@@ -41,8 +45,10 @@ jobs:
           grep -q 'sync-v2.js' src/app.js
           grep -q 'private-data-maintenance.js' src/app.js
           grep -q 'data-safety-hooks.js' src/app.js
+          grep -q 'management-menu.js' src/app.js
           grep -q 'button-system.css' src/app.js
           grep -q 'step-delete-safety.css' src/app.js
+          grep -q 'management-menu.css' src/app.js
           grep -q 'HISTORY_SLOTS=50' src/sync-v2.js
           grep -q 'MAX_CONFLICT_COPIES=20' src/private-data-maintenance.js
           grep -q 'getDocFromServer' src/private-data-maintenance.js
@@ -68,6 +74,9 @@ jobs:
       - name: Test step deletion safety
         run: node tests/step-delete-safety.mjs
 
+      - name: Test management menu structure
+        run: node tests/management-menu.mjs
+
       - name: Test Firestore rules in emulator
         run: npm run test:rules
 
@@ -83,6 +92,7 @@ jobs:
           trap 'kill $SERVER_PID' EXIT
           ROUTINER_URL=http://127.0.0.1:4175/ node tests/smoke-routiner-v2.mjs 2>&1 | tee /tmp/routiner-smoke.log
           ROUTINER_URL=http://127.0.0.1:4175/ node tests/step-delete-browser.mjs 2>&1 | tee /tmp/routiner-step-delete.log
+          ROUTINER_URL=http://127.0.0.1:4175/ node tests/management-menu-browser.mjs 2>&1 | tee /tmp/routiner-management-menu.log
 
       - name: Upload diagnostics
         if: always()
@@ -92,6 +102,7 @@ jobs:
           path: |
             /tmp/routiner-smoke.log
             /tmp/routiner-step-delete.log
+            /tmp/routiner-management-menu.log
             /tmp/routiner-http.log
             /tmp/routiner-v158-smoke.png
           if-no-files-found: ignore
