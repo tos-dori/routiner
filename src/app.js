@@ -22,7 +22,6 @@
   "backup.js",
   "data-safety-hooks.js",
   "events.js",
-  "step-delete-safety.js",
   "bootstrap.js"
 ];
 
