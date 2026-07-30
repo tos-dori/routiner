@@ -33,6 +33,7 @@ jobs:
           test -f styles/button-system.css
           test -f styles/step-delete-safety.css
           test -f tests/step-delete-safety.mjs
+          test -f tests/step-delete-browser.mjs
           test -f firestore.rules
           test -f firebase.json
           test -f DATA_SAFETY.md
@@ -73,7 +74,7 @@ jobs:
       - name: Install browser
         run: npx playwright install --with-deps chromium >/dev/null 2>&1
 
-      - name: Run 390x844 migration, recovery and UI test
+      - name: Run 390x844 migration, recovery and UI tests
         shell: bash
         run: |
           set -o pipefail
@@ -81,6 +82,7 @@ jobs:
           SERVER_PID=$!
           trap 'kill $SERVER_PID' EXIT
           ROUTINER_URL=http://127.0.0.1:4175/ node tests/smoke-routiner-v2.mjs 2>&1 | tee /tmp/routiner-smoke.log
+          ROUTINER_URL=http://127.0.0.1:4175/ node tests/step-delete-browser.mjs 2>&1 | tee /tmp/routiner-step-delete.log
 
       - name: Upload diagnostics
         if: always()
@@ -89,6 +91,7 @@ jobs:
           name: routiner-v2-diagnostics
           path: |
             /tmp/routiner-smoke.log
+            /tmp/routiner-step-delete.log
             /tmp/routiner-http.log
             /tmp/routiner-v158-smoke.png
           if-no-files-found: ignore
