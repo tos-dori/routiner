@@ -6,7 +6,12 @@ function normalizeArmedDeleteLabel() {
       });
     }
 
-function installArmedDeleteLabelObserver() {
+function installDeleteConfirmationPresentation() {
+      const originalShowToast = showToast;
+      showToast = function(message) {
+        if (message === "한 번 더 누르면 삭제") return;
+        return originalShowToast(message);
+      };
       if (!els.stepEditorList) return;
       new MutationObserver(normalizeArmedDeleteLabel).observe(els.stepEditorList, {
         subtree: true,
@@ -32,7 +37,7 @@ function initFromUrl() {
           window.history.replaceState(null, "", window.location.pathname);
         } catch (error) {}
       }
-      installArmedDeleteLabelObserver();
+      installDeleteConfirmationPresentation();
       renderHome();
     }
 
