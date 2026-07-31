@@ -102,6 +102,7 @@ jobs:
           path: |
             /tmp/routiner-smoke.log
             /tmp/routiner-step-delete.log
+            /tmp/routiner-editor-compact.png
             /tmp/routiner-management-menu.log
             /tmp/routiner-management-menu.png
             /tmp/routiner-http.log
