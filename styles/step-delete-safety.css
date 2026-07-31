@@ -52,7 +52,7 @@
 }
 .step-editor-list > div:has(.step-detail.active) > .step-card { display: none; }
 .step-editor-list > div:has(.step-detail.active) .step-detail {
-  display: grid; gap: 5px; padding: 0; border: 0; border-radius: 0; background: transparent;
+  display: grid; gap: 5px; padding: 0; border: 0; border-top: 1px solid transparent; border-radius: 0; background: transparent;
 }
 .step-editor-list > div:has(.step-detail.active) .field-row,
 .step-editor-list > div:has(.step-detail.active) .field-row.compact {
