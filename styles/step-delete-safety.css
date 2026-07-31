@@ -1,6 +1,104 @@
 .icon-btn.danger.confirm {
-  min-width: 70px;
-  background: rgba(199, 95, 78, 0.16);
-  color: var(--danger);
-  box-shadow: inset 0 0 0 1px rgba(199, 95, 78, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.56);
+  min-width: 46px;
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 24%, transparent), inset 0 1px 0 rgba(255,255,255,.22);
+}
+
+/* Closed steps are compact rows; only the open step is a bounded panel. */
+.edit-screen { gap: 5px; }
+.edit-panel { padding-bottom: 6px; }
+.routine-tabs { gap: 4px; padding: 0 1px 4px; }
+.routine-tab { min-height: 30px; padding: 0 9px; border-radius: 10px; font-size: 11px; }
+.section-title { min-height: 24px; margin: 0; padding: 2px 3px 4px; font-size: 12px; }
+.step-editor-list { gap: 2px; padding-bottom: 4px; }
+
+.step-editor-list > div:not(:has(.step-detail.active)) {
+  border-bottom: 1px solid rgba(67,54,38,.105);
+}
+.step-editor-list > div:not(:has(.step-detail.active)) .step-card {
+  min-height: 39px;
+  grid-template-columns: 28px minmax(0,1fr) auto;
+  gap: 7px;
+  padding: 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.step-editor-list > div:not(:has(.step-detail.active)) .step-card:active { background: rgba(255,255,255,.42); }
+.step-editor-list > div:not(:has(.step-detail.active)) .step-icon-tile {
+  width: 28px; height: 28px; border-radius: 9px; font-size: 16px;
+}
+.step-editor-list > div:not(:has(.step-detail.active)) .step-card-title {
+  font-size: 13px; line-height: 1.14;
+}
+.step-editor-list > div:not(:has(.step-detail.active)) .step-card-meta {
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 10px; line-height: 1.15; opacity: .72;
+}
+.step-editor-list > div:not(:has(.step-detail.active)) .step-time-pill {
+  min-height: 23px; padding: 0 7px; border: 0; border-radius: 8px;
+  background: rgba(67,54,38,.065); font-size: 10px;
+}
+
+.step-editor-list > div:has(.step-detail.active) {
+  margin: 3px 0 5px;
+  padding: 7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, rgba(67,54,38,.12));
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--accent-soft) 42%, rgba(255,255,255,.66));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.56);
+}
+.step-editor-list > div:has(.step-detail.active) > .step-card { display: none; }
+.step-editor-list > div:has(.step-detail.active) .step-detail {
+  display: grid; gap: 5px; padding: 0; border: 0; border-top: 1px solid transparent; border-radius: 0; background: transparent;
+}
+.step-editor-list > div:has(.step-detail.active) .field-row,
+.step-editor-list > div:has(.step-detail.active) .field-row.compact {
+  grid-template-columns: 38px minmax(0,1fr); gap: 5px;
+}
+.step-editor-list > div:has(.step-detail.active) .field {
+  height: 34px; min-height: 34px; padding: 0 9px; border: 0; border-radius: 10px;
+  background: rgba(255,255,255,.76); box-shadow: inset 0 0 0 1px rgba(67,54,38,.10); font-size: 14px;
+}
+.step-editor-list > div:has(.step-detail.active) .field.short { padding: 0; text-align: center; font-size: 16px; }
+.step-editor-list > div:has(.step-detail.active) .duration-control {
+  grid-template-columns: 34px 40px minmax(48px,1fr) 40px 34px; gap: 4px;
+}
+.step-editor-list > div:has(.step-detail.active) .duration-btn {
+  min-height: 29px; height: 29px; padding: 0 2px; border-radius: 9px; font-size: 10px;
+}
+.step-editor-list > div:has(.step-detail.active) .duration-value {
+  min-height: 29px; height: 29px; display: grid; place-items: center;
+  border-radius: 9px; background: rgba(255,255,255,.52); font-size: 12px;
+}
+.step-editor-list > div:has(.step-detail.active) .memo-wrap {
+  height: auto; min-height: 34px; flex: 0 0 auto; margin: 0;
+}
+.step-editor-list > div:has(.step-detail.active) .edit-textarea,
+.step-editor-list > div:has(.step-detail.active) .memo-wrap.has-note .edit-textarea,
+.step-editor-list > div:has(.step-detail.active) .edit-textarea:focus {
+  min-height: 34px; max-height: 52px; padding: 8px 30px 7px 9px;
+  border: 0; border-radius: 10px; background: rgba(255,255,255,.76);
+  box-shadow: inset 0 0 0 1px rgba(67,54,38,.10); font-size: 13px; line-height: 1.22;
+}
+.step-editor-list > div:has(.step-detail.active) .memo-wrap.no-note .edit-textarea { height: 34px; }
+.step-editor-list > div:has(.step-detail.active) .clear-memo { right: 4px; top: 5px; width: 24px; height: 24px; }
+.step-editor-list > div:has(.step-detail.active) .step-controls { min-height: 29px; padding-top: 0; }
+.step-editor-list > div:has(.step-detail.active) .step-order-controls { gap: 4px; }
+.step-editor-list > div:has(.step-detail.active) .icon-btn {
+  width: 32px; min-height: 29px; height: 29px; border-radius: 9px; font-size: 15px;
+}
+.step-editor-list > div:has(.step-detail.active) .icon-btn.danger {
+  width: auto; min-width: 46px; padding: 0 10px; font-size: 11px;
+}
+.add-step-card { min-height: 34px; margin-top: 2px; border-radius: 10px; background: transparent; font-size: 12px; }
+.reset-routine-card { min-height: 34px; margin-top: 3px; border-radius: 10px; font-size: 11px; }
+
+@media (max-width: 360px) {
+  .step-editor-list > div:has(.step-detail.active) { padding: 6px; }
+  .step-editor-list > div:has(.step-detail.active) .duration-control {
+    grid-template-columns: 32px 38px minmax(44px,1fr) 38px 32px; gap: 3px;
+  }
 }
