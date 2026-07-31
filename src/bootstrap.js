@@ -1,7 +1,8 @@
 function normalizeArmedDeleteLabel() {
       els.stepEditorList?.querySelectorAll('button[data-action="step-delete"].confirm').forEach((button) => {
-        button.textContent = "삭제";
-        button.setAttribute("aria-label", "삭제 확인 상태. 다시 누르면 이 단계를 삭제");
+        if (button.textContent !== "삭제") button.textContent = "삭제";
+        const label = "삭제 확인 상태. 다시 누르면 이 단계를 삭제";
+        if (button.getAttribute("aria-label") !== label) button.setAttribute("aria-label", label);
       });
     }
 
