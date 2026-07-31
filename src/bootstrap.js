@@ -1,3 +1,21 @@
+function normalizeArmedDeleteLabel() {
+      els.stepEditorList?.querySelectorAll('button[data-action="step-delete"].confirm').forEach((button) => {
+        button.textContent = "삭제";
+        button.setAttribute("aria-label", "삭제 확인 상태. 다시 누르면 이 단계를 삭제");
+      });
+    }
+
+function installArmedDeleteLabelObserver() {
+      if (!els.stepEditorList) return;
+      new MutationObserver(normalizeArmedDeleteLabel).observe(els.stepEditorList, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ["class"]
+      });
+      els.stepEditorList.addEventListener("click", () => queueMicrotask(normalizeArmedDeleteLabel), true);
+    }
+
 function initFromUrl() {
       updateCloudButton();
       initFirebase();
@@ -13,6 +31,7 @@ function initFromUrl() {
           window.history.replaceState(null, "", window.location.pathname);
         } catch (error) {}
       }
+      installArmedDeleteLabelObserver();
       renderHome();
     }
 
