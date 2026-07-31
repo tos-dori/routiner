@@ -15,8 +15,8 @@ const required = [
   [app, 'step-delete-safety.css'],
   [css, '.icon-btn.danger.confirm'],
   [css, ':has(.step-detail.active)'],
-  [css, 'border-bottom:1px solid'],
-  [css, 'min-height:39px']
+  [css, 'border-bottom: 1px solid'],
+  [css, 'min-height: 39px']
 ];
 for (const [source, token] of required) {
   if (!source.includes(token)) throw new Error(`Missing step-delete/editor safety token: ${token}`);
